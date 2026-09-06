@@ -1,0 +1,10 @@
+FROM node:20-alpine AS base
+WORKDIR /app
+COPY package*.json ./
+COPY packages ./packages
+COPY apps/worker ./apps/worker
+RUN npm install
+RUN npm run build --workspace=@sellzy/shared
+RUN npm run build --workspace=@sellzy/config
+RUN npm run build --workspace=@sellzy/worker
+CMD ["npm", "run", "start", "--workspace=@sellzy/worker"]

@@ -1,0 +1,11 @@
+# Environment & Secrets
+.env
+.env*.local
+
+# Node modules & build artifacts
+node_modules/
+dist/
+.next/
+out/
+.turbo/
+*.log

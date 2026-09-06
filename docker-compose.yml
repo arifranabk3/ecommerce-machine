@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: sellzy-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: sellzy_dev
+    volumes:
+      - mongodb_data:/data/db
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: sellzy-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.api
+    container_name: sellzy-api
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      MONGO_URI: mongodb://mongodb:27017/sellzy_dev
+      REDIS_URI: redis://redis:6379
+    depends_on:
+      - mongodb
+      - redis
+
+  worker:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.worker
+    container_name: sellzy-worker
+    environment:
+      NODE_ENV: development
+      MONGO_URI: mongodb://mongodb:27017/sellzy_dev
+      REDIS_URI: redis://redis:6379
+    depends_on:
+      - mongodb
+      - redis
+
+  web:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile.web
+    container_name: sellzy-web
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+volumes:
+  mongodb_data:
+  redis_data:
