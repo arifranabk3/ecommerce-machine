@@ -25,9 +25,11 @@ export default function SecuritySettingsPage() {
     }
   }, [token]);
 
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
   const fetchSessions = async () => {
     try {
-      const res = await fetch('http://localhost:4000/api/v1/auth/sessions', {
+      const res = await fetch(`${baseUrl}/api/v1/auth/sessions`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -37,7 +39,7 @@ export default function SecuritySettingsPage() {
 
   const fetchActivity = async () => {
     try {
-      const res = await fetch('http://localhost:4000/api/v1/auth/security/activity', {
+      const res = await fetch(`${baseUrl}/api/v1/auth/security/activity`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -49,7 +51,7 @@ export default function SecuritySettingsPage() {
     setIsLoading(true);
     setStatusMessage('');
     try {
-      const res = await fetch('http://localhost:4000/api/v1/auth/mfa/setup', {
+      const res = await fetch(`${baseUrl}/api/v1/auth/mfa/setup`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -65,7 +67,7 @@ export default function SecuritySettingsPage() {
   const verifyMfa = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('http://localhost:4000/api/v1/auth/mfa/verify', {
+      const res = await fetch(`${baseUrl}/api/v1/auth/mfa/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ token: mfaVerifyCode })
@@ -87,7 +89,7 @@ export default function SecuritySettingsPage() {
 
   const revokeSession = async (sessionId: string) => {
     try {
-      await fetch(`http://localhost:4000/api/v1/auth/sessions/${sessionId}`, {
+      await fetch(`${baseUrl}/api/v1/auth/sessions/${sessionId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -97,7 +99,7 @@ export default function SecuritySettingsPage() {
 
   const logoutAllDevices = async () => {
     try {
-      await fetch('http://localhost:4000/api/v1/auth/logout-all', {
+      await fetch(`${baseUrl}/api/v1/auth/logout-all`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });

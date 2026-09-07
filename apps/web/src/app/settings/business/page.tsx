@@ -22,9 +22,11 @@ export default function BusinessSettingsPage() {
     if (token) fetchTenant();
   }, [token]);
 
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
   const fetchTenant = async () => {
     try {
-      const res = await fetch('http://localhost:4000/api/v1/tenant', {
+      const res = await fetch(`${baseUrl}/api/v1/tenant`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -45,7 +47,7 @@ export default function BusinessSettingsPage() {
     setMessage('');
 
     try {
-      const res = await fetch('http://localhost:4000/api/v1/tenant/settings', {
+      const res = await fetch(`${baseUrl}/api/v1/tenant/settings`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ businessName, legalName, timezone, currency, country, locale })
