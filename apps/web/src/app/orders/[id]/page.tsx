@@ -18,7 +18,9 @@ import {
   RefreshCcw,
   Ban,
   DollarSign,
-  Copy
+  Copy,
+  Tag,
+  Phone
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';

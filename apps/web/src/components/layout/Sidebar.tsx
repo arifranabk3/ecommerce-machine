@@ -11,7 +11,8 @@ import {
   Package,
   LineChart,
   Headset,
-  ChevronDown
+  ChevronDown,
+  Palette
 } from 'lucide-react';
 
 export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ isOpen, onClose }) => {
@@ -31,6 +32,7 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
     { name: 'AI Copilot', href: '/ai', icon: ShieldCheck },
     { name: 'Integrations', href: '/integrations', icon: ShieldCheck },
     { name: 'Security', href: '/security', icon: ShieldCheck },
+    { name: 'Storefront Theme', href: '/settings/theme', icon: Palette },
     { name: 'Settings', href: '/settings/business', icon: Settings },
   ];
 

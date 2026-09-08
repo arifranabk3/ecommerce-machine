@@ -1,0 +1,145 @@
+# =============================================================================
+# Sellzy — Pull Request Validation
+# =============================================================================
+# Purpose : Fast, essential quality gate that must pass before any PR is
+#           merged into main. Intentionally lightweight — full regression
+#           runs only once, on ci-main.yml, after the merge commit lands.
+#
+# Strategy:
+#   - TypeScript typecheck across the entire monorepo
+#   - Smoke/security tests (health, auth security, tenant isolation, RBAC)
+#   - NO full 1,354+ test regression (reserved for ci-main.yml)
+#   - NO production build (deployment platforms build on their own)
+#   - Concurrency: cancel stale runs when a new commit is pushed to the PR
+#   - Path filter: skip if only docs / markdown / infrastructure changed
+#
+# Estimated run time : ~5–8 minutes per PR push
+#
+# =============================================================================
+# TEMPORARILY DISABLED — 2026-09-08
+# Reason: Monthly GitHub Actions minutes exhausted.
+# Automatic triggers are disabled until the October 1, 2026 billing reset.
+#
+# HOW TO RE-ENABLE after October 1, 2026:
+#   1. Replace the "on: workflow_dispatch" block below with the
+#      commented-out original trigger (lines marked RE-ENABLE below).
+#   2. Restore the concurrency block (also marked RE-ENABLE below).
+#   3. Commit and push — this workflow will trigger automatically on the
+#      next pull_request targeting main or master.
+#
+# DO NOT un-comment these triggers before the billing cycle resets.
+# GitHub Actions does NOT enforce billing-cycle dates on workflow triggers.
+# A file with an active pull_request trigger will fire immediately on push.
+# =============================================================================
+
+name: PR Validation
+
+on:
+  # DISABLED — manual trigger only while monthly Actions minutes are exhausted.
+  # See RE-ENABLE instructions in the comment block above.
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual run"
+        required: false
+        default: "Manual verification"
+
+# RE-ENABLE: After October 1, 2026, replace the workflow_dispatch block above
+# with the following (remove the leading #):
+#
+# on:
+#   pull_request:
+#     branches: [ main, master ]
+#     paths-ignore:
+#       - 'docs/**'
+#       - 'infrastructure/**'
+#       - '**.md'
+#       - '**.txt'
+#       - '.gitignore'
+#       - '.env.example'
+
+# RE-ENABLE: Also restore the concurrency block below (remove the leading #):
+#
+# concurrency:
+#   group: pr-${{ github.head_ref }}
+#   cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job: validate
+  # Runs typecheck + smoke tests (auth security, tenant isolation, RBAC, health)
+  # Does NOT run the full integration suite — that is reserved for ci-main.yml
+  # ---------------------------------------------------------------------------
+  validate:
+    name: Typecheck & Smoke Tests
+    runs-on: ubuntu-latest
+
+    services:
+      # Smoke tests for auth/RBAC require a live MongoDB instance
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ping:1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      # Security/session tests require Redis
+      redis:
+        image: redis:7.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # -----------------------------------------------------------------------
+      # Typecheck all packages and apps in dependency order via Turbo.
+      # Catches type errors across the entire monorepo before merge.
+      # -----------------------------------------------------------------------
+      - name: TypeScript Check (full monorepo)
+        run: npm run typecheck
+
+      # -----------------------------------------------------------------------
+      # Smoke suite: covers the security and correctness contracts that are
+      # cheapest to break and most critical to catch before merge.
+      #   - health.test.ts          : API is reachable
+      #   - security.test.ts        : General security headers / rate limits
+      #   - phase02_security.test.ts: Auth security (JWT, password hashing)
+      #   - phase03_*.test.ts       : Tenant isolation
+      #   - phase04_*.test.ts       : RBAC
+      # Full integration phases (05–15) run on ci-main.yml post-merge.
+      # -----------------------------------------------------------------------
+      - name: Smoke Tests (security & isolation)
+        working-directory: apps/api
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://localhost:27017/sellzy_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: ci-test-secret-not-used-in-production
+        run: |
+          npx jest \
+            tests/health.test.ts \
+            tests/security.test.ts \
+            tests/phase02_security.test.ts \
+            tests/phase03_tenant_isolation.test.ts \
+            tests/phase04_rbac_security.test.ts \
+            --runInBand \
+            --forceExit \
+            --passWithNoTests

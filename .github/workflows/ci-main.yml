@@ -1,0 +1,157 @@
+# =============================================================================
+# Sellzy — Main Branch Full CI
+# =============================================================================
+# Purpose : Authoritative, full-regression quality gate. Runs once after a
+#           PR merges to main. This is the single source of truth for whether
+#           the codebase is production-ready.
+#
+# Strategy:
+#   - Full 1,354+ test regression suite (all phase01–phase15 tests)
+#   - Full TypeScript typecheck across the monorepo
+#   - Full production build (verifies the build artifact is healthy)
+#   - Concurrency: cancel stale runs (new merge supersedes old one)
+#   - Path filter: skip if only docs / markdown / infrastructure changed
+#   - npm caching to avoid redundant dependency downloads
+#
+# Estimated run time : ~15–20 minutes per merge to main
+#
+# DUPLICATE WORK NOTE:
+#   The deployment platform (Vercel / Railway) performs its own build after
+#   each push to main. The build step here is therefore a correctness check,
+#   not a deployment artefact. If you want to reclaim those minutes in the
+#   future, you can remove the "Build Monorepo" step — the deployment
+#   platform's own build serves as the production build verification.
+#
+# =============================================================================
+# TEMPORARILY DISABLED — 2026-09-08
+# Reason: Monthly GitHub Actions minutes exhausted.
+# Automatic triggers are disabled until the October 1, 2026 billing reset.
+#
+# HOW TO RE-ENABLE after October 1, 2026:
+#   1. Replace the "on: workflow_dispatch" block below with the
+#      commented-out original trigger (lines marked RE-ENABLE below).
+#   2. Restore the concurrency block (also marked RE-ENABLE below).
+#   3. Commit and push — this workflow will trigger automatically on the
+#      next push to main or master.
+#
+# DO NOT un-comment these triggers before the billing cycle resets.
+# GitHub Actions does NOT enforce billing-cycle dates on workflow triggers.
+# A file with an active push trigger will fire immediately on the next push.
+# =============================================================================
+
+name: Main Branch Full CI
+
+on:
+  # DISABLED — manual trigger only while monthly Actions minutes are exhausted.
+  # See RE-ENABLE instructions in the comment block above.
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual run"
+        required: false
+        default: "Manual verification"
+
+# RE-ENABLE: After October 1, 2026, replace the workflow_dispatch block above
+# with the following (remove the leading #):
+#
+# on:
+#   push:
+#     branches: [ main, master ]
+#     paths-ignore:
+#       - 'docs/**'
+#       - 'infrastructure/**'
+#       - '**.md'
+#       - '**.txt'
+#       - '.gitignore'
+#       - '.env.example'
+
+# RE-ENABLE: Also restore the concurrency block below (remove the leading #):
+#
+# concurrency:
+#   group: main-ci-${{ github.ref }}
+#   cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Job: full-ci
+  # Single job to avoid unnecessary cross-job artefact uploads.
+  # Steps run sequentially so a failing typecheck aborts before the slow tests.
+  # ---------------------------------------------------------------------------
+  full-ci:
+    name: Full Regression — Typecheck / Tests / Build
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.runCommand({ping:1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          # npm cache keyed on package-lock.json — avoids full re-download
+          # when dependencies have not changed since the last run.
+          cache: 'npm'
+
+      - name: Install Dependencies
+        # npm ci guarantees a clean, lockfile-exact install.
+        # Never use `npm install` here — it can silently upgrade packages.
+        run: npm ci
+
+      # -----------------------------------------------------------------------
+      # Typecheck first: fastest signal of a broken codebase.
+      # Turbo respects ^build dependency order — shared packages are checked
+      # before the apps that depend on them.
+      # -----------------------------------------------------------------------
+      - name: TypeScript Check (full monorepo)
+        run: npm run typecheck
+
+      # -----------------------------------------------------------------------
+      # Full regression suite — all 16 test files, 1,354+ tests.
+      # Covers: security, tenant isolation, RBAC, products, orders, customers,
+      #         vendors, ledger, payments, shipping, marketing, automation,
+      #         analytics, SaaS integrations.
+      # Services (MongoDB + Redis) are live throughout.
+      # -----------------------------------------------------------------------
+      - name: Full Test Suite
+        working-directory: apps/api
+        env:
+          NODE_ENV: test
+          MONGODB_URI: mongodb://localhost:27017/sellzy_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: ci-test-secret-not-used-in-production
+        run: |
+          npx jest \
+            --runInBand \
+            --forceExit \
+            --passWithNoTests
+
+      # -----------------------------------------------------------------------
+      # Production build — verifies all apps compile to a deployable artefact.
+      # Turbo handles dependency ordering: packages/shared → packages/validation
+      # → packages/config → apps/api, apps/web, apps/worker.
+      # If the deployment platform (Vercel/Railway) already builds on push,
+      # you may remove this step to save ~5 minutes per run.
+      # -----------------------------------------------------------------------
+      - name: Build Monorepo
+        run: npm run build

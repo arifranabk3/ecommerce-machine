@@ -1,15 +1,44 @@
+# =============================================================================
+# Sellzy — Phase 01 Build & Integration Verification
+# =============================================================================
+# TEMPORARILY DISABLED — 2026-09-08
+# Reason: Monthly GitHub Actions minutes exhausted.
+# Will be re-enabled after the October 1, 2026 billing reset.
+#
+# HOW TO RE-ENABLE:
+#   Option A (quick restore, original behaviour):
+#     Replace the "on: workflow_dispatch" block below with the
+#     commented-out original triggers:
+#
+#     on:
+#       push:
+#         branches: [ main, master ]
+#       pull_request:
+#         branches: [ main, master ]
+#
+#   Option B (recommended, optimised):
+#     Leave this file as-is. The new ci-pr.yml and ci-main.yml
+#     workflows provide the same coverage with significantly fewer
+#     Actions minutes. Simply push to a PR or main branch and they
+#     will trigger automatically.
+# =============================================================================
+
 name: Phase 01 Build & Integration Verification
 
 on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  # DISABLED — manual trigger only while monthly Actions minutes are exhausted.
+  # See re-enable instructions in the comment block above.
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manual run"
+        required: false
+        default: "Manual verification"
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    
+
     services:
       mongodb:
         image: mongo:7.0
