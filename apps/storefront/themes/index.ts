@@ -144,18 +144,130 @@ export const themeRegistry: Record<string, ThemeConfig> = {
     responsiveConfig: { breakpoints: { sm: 640, md: 768, lg: 1024, xl: 1280 } },
     componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
   },
+  'tiano': {
+    id: 'tiano', name: 'Tiano', slug: 'tiano', folderName: 'tiano', version: '1.0.0',
+    description: 'Modern, clean fashion and clothing theme.', status: 'active',
+    categories: ['Fashion', 'Clothing', 'Minimal'], previewUrl: '/previews/tiano.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'], supportedComponents: ['header', 'footer', 'product-card'],
+    supportedSections: ['hero'], features: [], designTokens: {}, typography: {}, colors: {}, layout: {},
+    responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
+  },
+  'vogal': {
+    id: 'vogal', name: 'Vogal', slug: 'vogal', folderName: 'vogal', version: '1.0.0',
+    description: 'Multipurpose WooCommerce-style theme.', status: 'active',
+    categories: ['Multipurpose', 'Electronics'], previewUrl: '/previews/vogal.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'], supportedComponents: ['header', 'footer', 'product-card'],
+    supportedSections: ['hero'], features: [], designTokens: {}, typography: {}, colors: {}, layout: {},
+    responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
+  },
+  'wokiee': {
+    id: 'wokiee', name: 'Wokiee', slug: 'wokiee', folderName: 'wokiee', version: '1.0.0',
+    description: 'Premium multipurpose Shopify-style theme.', status: 'active',
+    categories: ['Multipurpose', 'Fashion', 'Sports'], previewUrl: '/previews/wokiee.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'], supportedComponents: ['header', 'footer', 'product-card'],
+    supportedSections: ['hero'], features: [], designTokens: {}, typography: {}, colors: {}, layout: {},
+    responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
+  },
+  'funore': {
+    id: 'funore', name: 'Funore', slug: 'funore', folderName: 'funore', version: '1.0.0',
+    description: 'Minimalist furniture and interior theme.', status: 'active',
+    categories: ['Furniture', 'Interior'], previewUrl: '/previews/funore.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'], supportedComponents: ['header', 'footer', 'product-card'],
+    supportedSections: ['hero'], features: [], designTokens: {}, typography: {}, colors: {}, layout: {},
+    responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
+  },
+  'zubbio': {
+    id: 'zubbio', name: 'Zubbio', slug: 'zubbio', folderName: 'zubbio', version: '1.0.0',
+    description: 'Watches and luxury accessories theme.', status: 'active',
+    categories: ['Watches', 'Luxury', 'Jewelry'], previewUrl: '/previews/zubbio.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'], supportedComponents: ['header', 'footer', 'product-card'],
+    supportedSections: ['hero'], features: [], designTokens: {}, typography: {}, colors: {}, layout: {},
+    responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
+  },
+  'vemus': {
+    id: 'vemus', name: 'Vemus', slug: 'vemus', folderName: 'vemus', version: '1.0.0',
+    description: 'High-performance automotive parts theme.', status: 'active',
+    categories: ['Automotive'], previewUrl: '/previews/vemus.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'], supportedComponents: ['header', 'footer', 'product-card'],
+    supportedSections: ['hero'], features: [], designTokens: {}, typography: {}, colors: {}, layout: {},
+    responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
+  },
+  'mirora': {
+    id: 'mirora', name: 'Mirora', slug: 'mirora', folderName: 'mirora', version: '1.0.0',
+    description: 'Elegant watch and timepieces theme.', status: 'active',
+    categories: ['Watches', 'Luxury'], previewUrl: '/previews/mirora.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'], supportedComponents: ['header', 'footer', 'product-card'],
+    supportedSections: ['hero'], features: [], designTokens: {}, typography: {}, colors: {}, layout: {},
+    responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
+  },
+  'aurum': {
+    id: 'aurum', name: 'Aurum', slug: 'aurum', folderName: 'aurum', version: '1.0.0',
+    description: 'Minimalist tech and electronics theme.', status: 'active',
+    categories: ['Electronics', 'Technology'], previewUrl: '/previews/aurum.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'], supportedComponents: ['header', 'footer', 'product-card'],
+    supportedSections: ['hero'], features: [], designTokens: {}, typography: {}, colors: {}, layout: {},
+    responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
+  },
+  'arome': {
+    id: 'arome', name: 'Arome', slug: 'arome', folderName: 'arome', version: '1.0.0',
+    description: 'Bakery, food, and culinary theme.', status: 'active',
+    categories: ['Food', 'Bakery'], previewUrl: '/previews/arome.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'], supportedComponents: ['header', 'footer', 'product-card'],
+    supportedSections: ['hero'], features: [], designTokens: {}, typography: {}, colors: {}, layout: {},
+    responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
+  },
+  'grocery': {
+    id: 'grocery', name: 'Grocery', slug: 'grocery', folderName: 'grocery', version: '1.0.0',
+    description: 'Fresh organic groceries and supermarket theme.', status: 'active',
+    categories: ['Grocery', 'Food', 'Organic'], previewUrl: '/previews/grocery.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'], supportedComponents: ['header', 'footer', 'product-card'],
+    supportedSections: ['hero'], features: [], designTokens: {}, typography: {}, colors: {}, layout: {},
+    responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
+  },
+  'organici': {
+    id: 'organici', name: 'Organici', slug: 'organici', folderName: 'organici', version: '1.0.0',
+    description: 'Organic farm, food, and healthy living theme.', status: 'active',
+    categories: ['Organic', 'Food', 'Health'], previewUrl: '/previews/organici.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'], supportedComponents: ['header', 'footer', 'product-card'],
+    supportedSections: ['hero'], features: [], designTokens: {}, typography: {}, colors: {}, layout: {},
+    responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
+  },
+  'ecommax': {
+    id: 'ecommax', name: 'Ecommax', slug: 'ecommax', folderName: 'ecommax', version: '1.0.0',
+    description: 'High-volume marketplace theme.', status: 'active',
+    categories: ['Multipurpose', 'Electronics'], previewUrl: '/previews/ecommax.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'], supportedComponents: ['header', 'footer', 'product-card'],
+    supportedSections: ['hero'], features: [], designTokens: {}, typography: {}, colors: {}, layout: {},
+    responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
+  },
+  'tonmart': {
+    id: 'tonmart', name: 'Tonmart', slug: 'tonmart', folderName: 'tonmart', version: '1.0.0',
+    description: 'Heavy tools and hardware equipment theme.', status: 'active',
+    categories: ['Hardware', 'Tools', 'Automotive'], previewUrl: '/previews/tonmart.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'], supportedComponents: ['header', 'footer', 'product-card'],
+    supportedSections: ['hero'], features: [], designTokens: {}, typography: {}, colors: {}, layout: {},
+    responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
+  },
+  'e-come': {
+    id: 'e-come', name: 'E-come', slug: 'e-come', folderName: 'e-come', version: '1.0.0',
+    description: 'Versatile digital marketplace theme.', status: 'active',
+    categories: ['Multipurpose', 'Technology'], previewUrl: '/previews/e-come.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'], supportedComponents: ['header', 'footer', 'product-card'],
+    supportedSections: ['hero'], features: [], designTokens: {}, typography: {}, colors: {}, layout: {},
+    responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
+  },
   'moduva': {
     id: 'moduva',
-    name: 'Moduva (Sandbox)',
+    name: 'Moduva',
     slug: 'moduva',
     folderName: 'moduva',
     version: '1.0.0',
-    description: 'Sandbox theme for testing.',
+    description: 'Minimal fashion theme.',
     status: 'active',
-    categories: ['Sandbox'],
-    previewUrl: '', demoUrl: '',
-    supportedPages: ['home'],
-    supportedComponents: [], supportedSections: [], features: [],
+    categories: ['Fashion'],
+    previewUrl: '/previews/moduva.png', demoUrl: '',
+    supportedPages: ['home', 'shop', 'product', 'cart'],
+    supportedComponents: ['header', 'footer', 'product-card'], supportedSections: ['hero'], features: [],
     designTokens: {}, typography: {}, colors: {}, layout: {},
     responsiveConfig: {}, componentMappings: {}, pageMappings: {}, cmsMappings: {}, featureFlags: {}
   }
