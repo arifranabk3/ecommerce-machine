@@ -1,6 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Table, Thead, Tbody, Tr, Th, Td } from '@/components/ui/Table';
 
 export default function PaymentsListPage() {
   const [payments] = useState<any[]>([
@@ -33,58 +38,46 @@ export default function PaymentsListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800 p-8 font-sans">
+    <DashboardLayout>
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex justify-between items-center border-b border-gray-200 pb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Customer Payments</h1>
-            <p className="text-sm text-gray-500 mt-1">
-              View and filter all customer transactions, payment states, and payment methods.
-            </p>
-          </div>
-        </div>
+        <PageHeader 
+          title="Customer Payments" 
+          subtitle="View and filter all customer transactions, payment states, and payment methods."
+        />
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-400 text-xs font-semibold uppercase">
-              <tr>
-                <th className="py-4 px-6">Payment Number</th>
-                <th className="py-4 px-6">Order ID</th>
-                <th className="py-4 px-6">Method</th>
-                <th className="py-4 px-6">Amount</th>
-                <th className="py-4 px-6">Status</th>
-                <th className="py-4 px-6">Created At</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
+        <Card className="!p-0 overflow-hidden">
+          <Table>
+            <Thead>
+              <Tr>
+                <Th>Payment Number</Th>
+                <Th>Order ID</Th>
+                <Th>Method</Th>
+                <Th>Amount</Th>
+                <Th>Status</Th>
+                <Th>Created At</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
               {payments.map((p) => (
-                <tr key={p.id} className="hover:bg-gray-50/50 cursor-pointer">
-                  <td className="py-4 px-6 font-mono font-medium text-gray-900">{p.paymentNumber}</td>
-                  <td className="py-4 px-6 text-gray-600 font-mono">{p.orderId}</td>
-                  <td className="py-4 px-6">
-                    <span className="px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-700">
-                      {p.method}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 font-semibold text-gray-900">{formatMoney(p.amountMinor, p.currency)}</td>
-                  <td className="py-4 px-6">
-                    <span
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
-                        p.status === 'CAPTURED'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-amber-50 text-amber-700'
-                      }`}
-                    >
+                <Tr key={p.id}>
+                  <Td className="font-mono font-medium text-slate-900">{p.paymentNumber}</Td>
+                  <Td className="text-slate-600 font-mono">{p.orderId}</Td>
+                  <Td>
+                    <Badge variant="neutral">{p.method}</Badge>
+                  </Td>
+                  <Td className="font-semibold text-slate-900">{formatMoney(p.amountMinor, p.currency)}</Td>
+                  <Td>
+                    <Badge variant={p.status === 'CAPTURED' ? 'success' : 'warning'}>
                       {p.status}
-                    </span>
-                  </td>
-                  <td className="py-4 px-6 text-gray-500 text-xs">{new Date(p.createdAt).toLocaleDateString()}</td>
-                </tr>
+                    </Badge>
+                  </Td>
+                  <Td className="text-slate-500 text-xs">{new Date(p.createdAt).toLocaleDateString()}</Td>
+                </Tr>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </Tbody>
+          </Table>
+        </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

@@ -2,39 +2,46 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Table, Thead, Tbody, Tr, Th, Td } from '@/components/ui/Table';
 
 export default function ExceptionsInboxPage() {
   return (
-    <div style={{ padding: '24px', fontFamily: 'system-ui, sans-serif' }}>
-      <header style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Automation Exception Inbox</h1>
-        <p style={{ color: '#666', margin: '4px 0 0 0' }}>Review system escalations, failed automation steps, and policy exception items.</p>
-      </header>
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <PageHeader 
+          title="Automation Exception Inbox" 
+          subtitle="Review system escalations, failed automation steps, and policy exception items."
+        />
 
-      <div style={{ backgroundColor: '#fff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '20px' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-              <th style={{ padding: '12px' }}>Severity</th>
-              <th style={{ padding: '12px' }}>Category</th>
-              <th style={{ padding: '12px' }}>Title</th>
-              <th style={{ padding: '12px' }}>Status</th>
-              <th style={{ padding: '12px' }}>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style={{ borderBottom: '1px solid #e2e8f0' }}>
-              <td style={{ padding: '12px' }}><span style={{ backgroundColor: '#fee2e2', color: '#b91c1c', padding: '2px 8px', borderRadius: '4px', fontSize: '12px' }}>HIGH</span></td>
-              <td style={{ padding: '12px' }}>INVENTORY_STOCKOUT</td>
-              <td style={{ padding: '12px' }}>Supplier Unavailable for SKU-100</td>
-              <td style={{ padding: '12px' }}><span style={{ color: '#d97706', fontWeight: '600' }}>OPEN</span></td>
-              <td style={{ padding: '12px' }}>
-                <Link href="/exceptions/exc_901" style={{ color: '#2563eb', fontWeight: '600' }}>Review & Resolve →</Link>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <Card className="!p-0 overflow-hidden">
+          <Table>
+            <Thead>
+              <Tr>
+                <Th>Severity</Th>
+                <Th>Category</Th>
+                <Th>Title</Th>
+                <Th>Status</Th>
+                <Th>Action</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              <Tr>
+                <Td><Badge variant="error">HIGH</Badge></Td>
+                <Td>INVENTORY_STOCKOUT</Td>
+                <Td>Supplier Unavailable for SKU-100</Td>
+                <Td><span className="text-amber-600 font-semibold">OPEN</span></Td>
+                <Td>
+                  <Link href="/exceptions/exc_901" className="text-brand-500 font-semibold hover:underline">Review & Resolve →</Link>
+                </Td>
+              </Tr>
+            </Tbody>
+          </Table>
+        </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

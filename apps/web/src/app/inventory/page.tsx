@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Warehouse, ArrowRightLeft, History, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Table, Thead, Tbody, Tr, Th, Td } from '@/components/ui/Table';
 
 export default function InventoryPage() {
   const [activeTab, setActiveTab] = useState<'BALANCES' | 'MOVEMENTS' | 'ALERTS'>('BALANCES');
@@ -63,23 +65,14 @@ export default function InventoryPage() {
   return (
     <DashboardLayout>
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-brand-900 tracking-tight">Inventory & Stock Ledger</h1>
-            <p className="text-sm text-slate-500 mt-1">Multi-location stock balances, reservations, and movement audit log</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/settings/locations">
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <Warehouse className="w-4 h-4" /> Manage Locations
-              </Button>
-            </Link>
-            <Button variant="primary" size="sm" className="flex items-center gap-2">
-              <ArrowRightLeft className="w-4 h-4" /> Transfer Stock
-            </Button>
-          </div>
-        </div>
+        <PageHeader 
+          title="Inventory & Stock Ledger" 
+          subtitle="Multi-location stock balances, reservations, and movement audit log"
+          actions={[
+            { label: 'Manage Locations', variant: 'outline', icon: <Warehouse className="w-4 h-4" />, href: '/settings/locations' },
+            { label: 'Transfer Stock', variant: 'primary', icon: <ArrowRightLeft className="w-4 h-4" /> }
+          ]}
+        />
 
         {/* Tab Navigation */}
         <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
@@ -111,31 +104,31 @@ export default function InventoryPage() {
 
         {/* Tab Content */}
         {activeTab === 'BALANCES' && (
-          <Card className="overflow-hidden">
-            <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-medium">
-                  <th className="py-3 px-4">Product & SKU</th>
-                  <th className="py-3 px-4">Location</th>
-                  <th className="py-3 px-4">On Hand</th>
-                  <th className="py-3 px-4">Reserved</th>
-                  <th className="py-3 px-4">Available</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+          <Card className="!p-0 overflow-hidden">
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>Product & SKU</Th>
+                  <Th>Location</Th>
+                  <Th>On Hand</Th>
+                  <Th>Reserved</Th>
+                  <Th>Available</Th>
+                  <Th>Status</Th>
+                  <Th className="text-right">Action</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
                 {balances.map((b) => (
-                  <tr key={b.id} className="hover:bg-slate-50/50">
-                    <td className="py-3 px-4 font-medium text-brand-900">
+                  <Tr key={b.id}>
+                    <Td className="font-medium text-brand-900">
                       <div>{b.productName}</div>
                       <span className="text-xs text-slate-400 font-mono">{b.sku}</span>
-                    </td>
-                    <td className="py-3 px-4 text-xs font-medium text-slate-600">{b.location}</td>
-                    <td className="py-3 px-4 font-bold">{b.onHand}</td>
-                    <td className="py-3 px-4 text-amber-600 font-semibold">{b.reserved}</td>
-                    <td className="py-3 px-4 text-emerald-600 font-bold">{b.available}</td>
-                    <td className="py-3 px-4">
+                    </Td>
+                    <Td className="text-xs font-medium text-slate-600">{b.location}</Td>
+                    <Td className="font-bold">{b.onHand}</Td>
+                    <Td className="text-amber-600 font-semibold">{b.reserved}</Td>
+                    <Td className="text-emerald-600 font-bold">{b.available}</Td>
+                    <Td>
                       {b.available <= b.reorderPoint ? (
                         <Badge variant="warning" className="flex items-center gap-1 w-max">
                           <AlertTriangle className="w-3 h-3" /> Low Stock
@@ -145,47 +138,47 @@ export default function InventoryPage() {
                           <CheckCircle className="w-3 h-3" /> In Stock
                         </Badge>
                       )}
-                    </td>
-                    <td className="py-3 px-4 text-right">
+                    </Td>
+                    <Td className="text-right">
                       <Button variant="outline" size="sm">Adjust</Button>
-                    </td>
-                  </tr>
+                    </Td>
+                  </Tr>
                 ))}
-              </tbody>
-            </table>
+              </Tbody>
+            </Table>
           </Card>
         )}
 
         {activeTab === 'MOVEMENTS' && (
-          <Card className="overflow-hidden">
-            <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-medium">
-                  <th className="py-3 px-4">Timestamp</th>
-                  <th className="py-3 px-4">SKU</th>
-                  <th className="py-3 px-4">Movement Type</th>
-                  <th className="py-3 px-4">Delta</th>
-                  <th className="py-3 px-4">Before / After</th>
-                  <th className="py-3 px-4">Reason / Ref</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+          <Card className="!p-0 overflow-hidden">
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>Timestamp</Th>
+                  <Th>SKU</Th>
+                  <Th>Movement Type</Th>
+                  <Th>Delta</Th>
+                  <Th>Before / After</Th>
+                  <Th>Reason / Ref</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
                 {movements.map((m) => (
-                  <tr key={m.id} className="hover:bg-slate-50/50">
-                    <td className="py-3 px-4 text-xs text-slate-400">{m.time}</td>
-                    <td className="py-3 px-4 font-mono text-xs">{m.sku}</td>
-                    <td className="py-3 px-4">
+                  <Tr key={m.id}>
+                    <Td className="text-xs text-slate-400">{m.time}</Td>
+                    <Td className="font-mono text-xs">{m.sku}</Td>
+                    <Td>
                       <Badge variant="outline">{m.type}</Badge>
-                    </td>
-                    <td className={`py-3 px-4 font-bold ${m.delta.startsWith('+') ? 'text-emerald-600' : 'text-slate-600'}`}>
+                    </Td>
+                    <Td className={`font-bold ${m.delta.startsWith('+') ? 'text-emerald-600' : 'text-slate-600'}`}>
                       {m.delta}
-                    </td>
-                    <td className="py-3 px-4 text-xs">{m.before} → <span className="font-semibold text-brand-900">{m.after}</span></td>
-                    <td className="py-3 px-4 text-xs text-slate-500">{m.reason}</td>
-                  </tr>
+                    </Td>
+                    <Td className="text-xs">{m.before} → <span className="font-semibold text-brand-900">{m.after}</span></Td>
+                    <Td className="text-xs text-slate-500">{m.reason}</Td>
+                  </Tr>
                 ))}
-              </tbody>
-            </table>
+              </Tbody>
+            </Table>
           </Card>
         )}
 

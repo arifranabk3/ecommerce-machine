@@ -1,58 +1,51 @@
 'use client';
-
 import React, { useState } from 'react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card } from '@/components/ui/Card';
 
 export default function RTODashboardPage() {
   const [rtos] = useState([
-    {
-      id: 'rto_1',
-      rtoNumber: 'RTO-2026-000001',
-      shipmentNumber: 'SHP-2026-000019',
-      orderNumber: 'ORD-2026-000115',
-      reason: 'CUSTOMER_UNAVAILABLE_3_ATTEMPTS',
-      status: 'IN_TRANSIT',
-      rtoCostMinor: 25000,
-      initiatedAt: '2026-09-04'
-    }
+    { id: 'rto_1', rtoNumber: 'RTO-2026-000001', shipmentNumber: 'SHP-2026-000019', orderNumber: 'ORD-2026-000115', reason: 'CUSTOMER_UNAVAILABLE_3_ATTEMPTS', status: 'IN_TRANSIT', rtoCostMinor: 25000, initiatedAt: '2026-09-04' }
   ]);
 
   return (
-    <div style={{ padding: '2rem', backgroundColor: '#F9FAF8', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      <header style={{ marginBottom: '2rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#111827', margin: 0 }}>Return-to-Origin (RTO) Tracking</h1>
-        <p style={{ color: '#6B7280', fontSize: '0.875rem', marginTop: '0.25rem' }}>Monitor failed delivery returns, reverse transit, and warehouse receiving.</p>
-      </header>
-
-      <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E5E7EB', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid #E5E7EB', color: '#6B7280' }}>
-              <th style={{ padding: '0.75rem' }}>RTO #</th>
-              <th style={{ padding: '0.75rem' }}>Shipment #</th>
-              <th style={{ padding: '0.75rem' }}>Order</th>
-              <th style={{ padding: '0.75rem' }}>Reason</th>
-              <th style={{ padding: '0.75rem' }}>RTO Cost</th>
-              <th style={{ padding: '0.75rem' }}>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rtos.map(rto => (
-              <tr key={rto.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                <td style={{ padding: '0.75rem', fontWeight: 600, color: '#DC2626' }}>{rto.rtoNumber}</td>
-                <td style={{ padding: '0.75rem' }}>{rto.shipmentNumber}</td>
-                <td style={{ padding: '0.75rem' }}>{rto.orderNumber}</td>
-                <td style={{ padding: '0.75rem' }}>{rto.reason}</td>
-                <td style={{ padding: '0.75rem' }}>PKR {(rto.rtoCostMinor / 100).toLocaleString()}</td>
-                <td style={{ padding: '0.75rem' }}>
-                  <span style={{ backgroundColor: '#FEE2E2', color: '#DC2626', padding: '0.25rem 0.5rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600 }}>
-                    {rto.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <PageHeader title="Return-to-Origin (RTO) Tracking" subtitle="Monitor failed delivery returns, reverse transit, and warehouse receiving." />
+        <Card>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm text-slate-600">
+              <thead className="text-xs uppercase bg-slate-50 border-b border-slate-200 text-slate-500">
+                <tr>
+                  <th className="px-6 py-3 font-semibold">RTO #</th>
+                  <th className="px-6 py-3 font-semibold">Shipment #</th>
+                  <th className="px-6 py-3 font-semibold">Order</th>
+                  <th className="px-6 py-3 font-semibold">Reason</th>
+                  <th className="px-6 py-3 font-semibold">RTO Cost</th>
+                  <th className="px-6 py-3 font-semibold">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 bg-white">
+                {rtos.map(rto => (
+                  <tr key={rto.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 font-semibold text-red-600">{rto.rtoNumber}</td>
+                    <td className="px-6 py-4">{rto.shipmentNumber}</td>
+                    <td className="px-6 py-4">{rto.orderNumber}</td>
+                    <td className="px-6 py-4">{rto.reason}</td>
+                    <td className="px-6 py-4">PKR {(rto.rtoCostMinor / 100).toLocaleString()}</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-red-100 text-red-800">
+                        {rto.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

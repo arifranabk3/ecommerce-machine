@@ -1,6 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
 
 export default function MessageTemplatesPage() {
   const [templates] = useState([
@@ -25,37 +29,37 @@ export default function MessageTemplatesPage() {
   ]);
 
   return (
-    <div style={{ padding: '2rem', backgroundColor: '#F9FAF8', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#111827', margin: 0 }}>Message & Notification Templates</h1>
-          <p style={{ color: '#6B7280', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-            Pre-approved message templates for WhatsApp Cloud API, Email, and SMS notifications.
-          </p>
-        </div>
-        <button style={{ backgroundColor: '#2563EB', color: '#FFFFFF', padding: '0.75rem 1.25rem', borderRadius: '8px', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
-          + New Template
-        </button>
-      </header>
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <PageHeader 
+          title="Message & Notification Templates" 
+          subtitle="Pre-approved message templates for WhatsApp Cloud API, Email, and SMS notifications."
+          actions={[
+            { label: 'New Template', variant: 'primary' }
+          ]}
+        />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
-        {templates.map((t) => (
-          <div key={t.id} style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E5E7EB', padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <span style={{ fontWeight: 700, fontSize: '1rem', color: '#111827' }}>{t.name}</span>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '4px', backgroundColor: '#DCFCE7', color: '#15803D' }}>
-                {t.status}
-              </span>
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#6B7280', marginBottom: '0.75rem' }}>
-              Channel: <strong>{t.channel}</strong> | Category: <strong>{t.category}</strong> | Lang: <strong>{t.language}</strong>
-            </div>
-            <div style={{ backgroundColor: '#F9FAFB', border: '1px dashed #D1D5DB', borderRadius: '8px', padding: '0.75rem', fontSize: '0.875rem', color: '#374151' }}>
-              {t.content}
-            </div>
-          </div>
-        ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {templates.map((t) => (
+            <Card key={t.id} className="p-5 flex flex-col justify-between space-y-4">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-bold text-slate-900">{t.name}</span>
+                  <Badge variant="success">
+                    {t.status}
+                  </Badge>
+                </div>
+                <div className="text-xs text-slate-500 mb-4">
+                  Channel: <strong className="text-slate-700">{t.channel}</strong> | Category: <strong className="text-slate-700">{t.category}</strong> | Lang: <strong className="text-slate-700">{t.language}</strong>
+                </div>
+                <div className="bg-slate-50 border border-dashed border-slate-300 rounded-lg p-3 text-sm text-slate-700 font-mono">
+                  {t.content}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

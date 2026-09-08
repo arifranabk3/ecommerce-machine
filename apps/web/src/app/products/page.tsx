@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Package, Plus, Search, Filter, Warehouse, Tag, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Table, Thead, Tbody, Tr, Th, Td } from '@/components/ui/Table';
 
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,20 +44,13 @@ export default function ProductsPage() {
   return (
     <DashboardLayout>
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-brand-900 tracking-tight">Products & Catalog</h1>
-            <p className="text-sm text-slate-500 mt-1">Manage SKUs, variants, cost margins, and catalog items</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/products/new">
-              <Button variant="primary" className="flex items-center gap-2">
-                <Plus className="w-4 h-4" /> Add Product
-              </Button>
-            </Link>
-          </div>
-        </div>
+        <PageHeader 
+          title="Products & Catalog" 
+          subtitle="Manage SKUs, variants, cost margins, and catalog items"
+          actions={[
+            { label: 'Add Product', variant: 'primary', icon: <Plus className="w-4 h-4" />, href: '/products/new' }
+          ]}
+        />
 
         {/* Filters & Search */}
         <Card className="p-4 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -87,61 +82,59 @@ export default function ProductsPage() {
         </Card>
 
         {/* Product Table */}
-        <Card className="overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-sm">
-              <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-medium">
-                  <th className="py-3 px-4">Product Name</th>
-                  <th className="py-3 px-4">SKU</th>
-                  <th className="py-3 px-4">Type</th>
-                  <th className="py-3 px-4">Price</th>
-                  <th className="py-3 px-4">Gross Margin</th>
-                  <th className="py-3 px-4">Total Stock</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {mockProducts.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3 px-4 font-medium text-brand-900 flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
-                        <Package className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div>{p.name}</div>
-                        <span className="text-xs text-slate-400">{p.category}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 font-mono text-xs">{p.sku}</td>
-                    <td className="py-3 px-4">
-                      <Badge variant="outline">{p.type}</Badge>
-                    </td>
-                    <td className="py-3 px-4 font-medium">Rs. {(p.sellingPrice / 100).toLocaleString()}</td>
-                    <td className="py-3 px-4 text-emerald-600 font-semibold">{p.margin}</td>
-                    <td className="py-3 px-4">
-                      {p.stock <= 10 ? (
-                        <span className="flex items-center gap-1 text-amber-600 font-medium text-xs">
-                          <AlertTriangle className="w-3.5 h-3.5" /> {p.stock} units
-                        </span>
-                      ) : (
-                        <span>{p.stock} units</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge variant={p.status === 'ACTIVE' ? 'success' : 'neutral'}>{p.status}</Badge>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <Link href={`/products/${p.id}`}>
-                        <Button variant="ghost" size="sm">Manage</Button>
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <Card className="!p-0 overflow-hidden">
+          <Table>
+            <Thead>
+              <Tr>
+                <Th>Product Name</Th>
+                <Th>SKU</Th>
+                <Th>Type</Th>
+                <Th>Price</Th>
+                <Th>Gross Margin</Th>
+                <Th>Total Stock</Th>
+                <Th>Status</Th>
+                <Th className="text-right">Actions</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {mockProducts.map((p) => (
+                <Tr key={p.id}>
+                  <Td className="font-medium text-brand-900 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500">
+                      <Package className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div>{p.name}</div>
+                      <span className="text-xs text-slate-400">{p.category}</span>
+                    </div>
+                  </Td>
+                  <Td className="font-mono text-xs">{p.sku}</Td>
+                  <Td>
+                    <Badge variant="outline">{p.type}</Badge>
+                  </Td>
+                  <Td className="font-medium">Rs. {(p.sellingPrice / 100).toLocaleString()}</Td>
+                  <Td className="text-emerald-600 font-semibold">{p.margin}</Td>
+                  <Td>
+                    {p.stock <= 10 ? (
+                      <span className="flex items-center gap-1 text-amber-600 font-medium text-xs">
+                        <AlertTriangle className="w-3.5 h-3.5" /> {p.stock} units
+                      </span>
+                    ) : (
+                      <span>{p.stock} units</span>
+                    )}
+                  </Td>
+                  <Td>
+                    <Badge variant={p.status === 'ACTIVE' ? 'success' : 'neutral'}>{p.status}</Badge>
+                  </Td>
+                  <Td className="text-right">
+                    <Link href={`/products/${p.id}`}>
+                      <Button variant="ghost" size="sm">Manage</Button>
+                    </Link>
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
         </Card>
       </div>
     </DashboardLayout>

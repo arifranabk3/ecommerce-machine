@@ -1,6 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Table, Thead, Tbody, Tr, Th, Td } from '@/components/ui/Table';
 
 interface UserMember {
   id: string;
@@ -105,38 +112,27 @@ export default function UserManagementPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] p-6 font-sans">
+    <DashboardLayout>
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-[#E2E8F0]">
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-[#0F172A]">User & Team Management</h1>
-              <span className="bg-[#E6F0EB] text-[#2C5E4E] text-xs font-semibold px-2.5 py-0.5 rounded-full">RBAC Enforcement Active</span>
-            </div>
-            <p className="text-sm text-[#64748B] mt-1">Manage team member access, role assignments, active sessions, and tenant status.</p>
-          </div>
-          <button
-            onClick={() => setShowInviteModal(true)}
-            className="bg-[#A9C2B9] hover:bg-[#96B3A9] text-[#0F172A] font-semibold px-5 py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"/></svg>
-            Invite Team Member
-          </button>
-        </div>
+        <PageHeader 
+          title="User & Team Management" 
+          subtitle="Manage team member access, role assignments, active sessions, and tenant status."
+          actions={[
+            { label: 'Invite Team Member', variant: 'primary', onClick: () => setShowInviteModal(true) }
+          ]}
+        />
 
         {/* Filters & Search Bar */}
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-[#E2E8F0] flex flex-col md:flex-row gap-4 justify-between items-center">
-          <div className="relative w-full md:w-80">
-            <input
+        <Card className="flex flex-col md:flex-row gap-4 justify-between items-center p-4">
+          <div className="w-full md:w-80">
+            <Input
               type="text"
               placeholder="Search by name or email..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#A9C2B9]"
             />
-            <svg className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
@@ -163,75 +159,74 @@ export default function UserManagementPage() {
               <option value="Staff">Staff</option>
             </select>
           </div>
-        </div>
+        </Card>
 
         {/* Users Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-[#E2E8F0] overflow-hidden">
+        <Card className="!p-0 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-[#334155]">
-              <thead className="bg-[#F8FAFC] text-xs font-semibold uppercase text-[#64748B] border-b border-[#E2E8F0]">
-                <tr>
-                  <th className="py-3.5 px-6">User</th>
-                  <th className="py-3.5 px-6">Assigned Roles</th>
-                  <th className="py-3.5 px-6">Status</th>
-                  <th className="py-3.5 px-6">Joined Date</th>
-                  <th className="py-3.5 px-6 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F1F5F9]">
+            <Table>
+              <Thead>
+                <Tr>
+                  <Th>User</Th>
+                  <Th>Assigned Roles</Th>
+                  <Th>Status</Th>
+                  <Th>Joined Date</Th>
+                  <Th className="text-right">Actions</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
                 {filteredUsers.map(user => (
-                  <tr key={user.id} className="hover:bg-[#F8FAFC] transition-colors">
-                    <td className="py-4 px-6">
+                  <Tr key={user.id}>
+                    <Td>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#E2E8F0] text-[#0F172A] font-bold flex items-center justify-center text-sm border border-white shadow-sm">
+                        <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-900 font-bold flex items-center justify-center text-sm border border-white shadow-sm">
                           {user.name.charAt(0)}
                         </div>
                         <div>
-                          <div className="font-semibold text-[#0F172A] flex items-center gap-2">
+                          <div className="font-semibold text-slate-900 flex items-center gap-2">
                             {user.name}
                             {user.isOwner && (
-                              <span className="bg-[#FEF3C7] text-[#92400E] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#FDE68A]">OWNER</span>
+                              <Badge variant="warning" className="!text-[10px] !px-1.5 !py-0.5">OWNER</Badge>
                             )}
                           </div>
-                          <div className="text-xs text-[#64748B]">{user.email}</div>
+                          <div className="text-xs text-slate-500">{user.email}</div>
                         </div>
                       </div>
-                    </td>
-                    <td className="py-4 px-6">
+                    </Td>
+                    <Td>
                       <div className="flex flex-wrap gap-1.5">
                         {user.roles.map(r => (
-                          <span key={r} className="bg-[#F1F5F9] text-[#334155] text-xs font-medium px-2.5 py-1 rounded-lg border border-[#E2E8F0]">
-                            {r}
-                          </span>
+                          <Badge key={r} variant="info">{r}</Badge>
                         ))}
                       </div>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
-                        user.status === 'ACTIVE' ? 'bg-[#DCFCE7] text-[#166534] border-[#BBF7D0]' :
-                        user.status === 'INVITED' ? 'bg-[#E0F2FE] text-[#0369A1] border-[#BAE6FD]' :
-                        'bg-[#FEE2E2] text-[#991B1B] border-[#FECACA]'
-                      }`}>
+                    </Td>
+                    <Td>
+                      <Badge variant={
+                        user.status === 'ACTIVE' ? 'success' :
+                        user.status === 'INVITED' ? 'info' :
+                        'error'
+                      }>
                         {user.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6 text-xs text-[#64748B]">
+                      </Badge>
+                    </Td>
+                    <Td className="text-xs text-slate-500">
                       {new Date(user.joinedAt).toLocaleDateString()}
-                    </td>
-                    <td className="py-4 px-6 text-right space-x-2">
-                      <button
+                    </Td>
+                    <Td className="text-right">
+                      <Button
+                        variant="secondary"
                         onClick={() => setSelectedUser(user)}
-                        className="text-xs font-medium text-[#0F172A] bg-[#F1F5F9] hover:bg-[#E2E8F0] px-3 py-1.5 rounded-lg border border-[#CBD5E1] transition-all"
+                        className="text-xs py-1.5 px-3"
                       >
                         Manage
-                      </button>
-                    </td>
-                  </tr>
+                      </Button>
+                    </Td>
+                  </Tr>
                 ))}
-              </tbody>
-            </table>
+              </Tbody>
+            </Table>
           </div>
-        </div>
+        </Card>
 
         {/* User Detail Drawer Modal */}
         {selectedUser && (
@@ -298,32 +293,31 @@ export default function UserManagementPage() {
 
         {/* Invite Modal */}
         {showInviteModal && (
-          <div className="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-[#E2E8F0] space-y-4">
-              <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-3">
-                <h3 className="text-lg font-bold text-[#0F172A]">Invite New Team Member</h3>
-                <button onClick={() => setShowInviteModal(false)} className="text-[#94A3B8] hover:text-[#0F172A]">✕</button>
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 className="text-lg font-bold text-slate-900">Invite New Team Member</h3>
+                <button onClick={() => setShowInviteModal(false)} className="text-slate-400 hover:text-slate-900">✕</button>
               </div>
 
               <form onSubmit={handleInviteSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#334155] mb-1">Email Address</label>
-                  <input
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
+                  <Input
                     type="email"
                     required
                     placeholder="colleague@business.com"
                     value={inviteEmail}
                     onChange={e => setInviteEmail(e.target.value)}
-                    className="w-full bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl px-3.5 py-2 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#A9C2B9]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#334155] mb-1">Assign Role</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Assign Role</label>
                   <select
                     value={inviteRole}
                     onChange={e => setInviteRole(e.target.value)}
-                    className="w-full bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl px-3.5 py-2 text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#A9C2B9]"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-brand-500"
                   >
                     <option value="Admin">Admin (Operational Authority)</option>
                     <option value="Manager">Manager (Team Operations)</option>
@@ -332,24 +326,24 @@ export default function UserManagementPage() {
                   </select>
                 </div>
 
-                <div className="bg-[#F8FAFC] p-3 rounded-xl border border-[#E2E8F0] text-xs text-[#64748B]">
+                <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-500">
                   Role ceiling check will verify server-side that you possess all permissions included in this role before sending the invitation.
                 </div>
 
                 <div className="flex justify-end gap-3 pt-2">
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     onClick={() => setShowInviteModal(false)}
-                    className="px-4 py-2 rounded-xl text-xs font-semibold text-[#64748B] hover:bg-[#F1F5F9]"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="submit"
-                    className="px-5 py-2 rounded-xl text-xs font-semibold bg-[#A9C2B9] hover:bg-[#96B3A9] text-[#0F172A] shadow-sm"
+                    variant="primary"
                   >
                     Send Invitation
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
@@ -357,6 +351,6 @@ export default function UserManagementPage() {
         )}
 
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

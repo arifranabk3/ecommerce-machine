@@ -1,6 +1,12 @@
 'use client';
 
 import React, { useState } from 'react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 
 export default function UnifiedInboxPage() {
   const [conversations] = useState([
@@ -37,93 +43,78 @@ export default function UnifiedInboxPage() {
   const [newMessage, setNewMessage] = useState('');
 
   return (
-    <div style={{ padding: '2rem', backgroundColor: '#F9FAF8', minHeight: '100vh', fontFamily: 'sans-serif' }}>
-      <header style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 700, color: '#111827', margin: 0 }}>Unified Customer Communication Inbox</h1>
-        <p style={{ color: '#6B7280', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-          Omnichannel messages across WhatsApp, Email, and SMS with realtime status tracking.
-        </p>
-      </header>
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto space-y-6">
+        <PageHeader 
+          title="Unified Customer Communication Inbox" 
+          subtitle="Omnichannel messages across WhatsApp, Email, and SMS with realtime status tracking."
+        />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '1.5rem', height: 'calc(100vh - 180px)' }}>
-        {/* Conversations List */}
-        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E5E7EB', padding: '1rem', overflowY: 'auto' }}>
-          <h2 style={{ fontSize: '1rem', fontWeight: 600, color: '#111827', marginBottom: '1rem' }}>Conversations</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 h-[calc(100vh-180px)] min-h-[600px]">
+          {/* Conversations List */}
+          <Card className="p-4 overflow-y-auto">
+            <h2 className="text-base font-semibold text-slate-900 mb-4">Conversations</h2>
+            <div className="flex flex-col gap-2">
             {conversations.map((c) => (
-              <div
-                key={c.id}
-                onClick={() => setActiveConv(c)}
-                style={{
-                  padding: '0.75rem',
-                  borderRadius: '8px',
-                  border: '1px solid #F3F4F6',
-                  backgroundColor: activeConv?.id === c.id ? '#F3F4F6' : '#FFFFFF',
-                  cursor: 'pointer',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#111827' }}>{c.customerName}</span>
-                  <span
-                    style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      padding: '0.15rem 0.4rem',
-                      borderRadius: '4px',
-                      backgroundColor: c.channel === 'WHATSAPP' ? '#DCFCE7' : c.channel === 'EMAIL' ? '#DBEAFE' : '#F3E8FF',
-                      color: c.channel === 'WHATSAPP' ? '#166534' : c.channel === 'EMAIL' ? '#1E40AF' : '#6B21A8',
-                    }}
-                  >
-                    {c.channel}
-                  </span>
+                <div
+                  key={c.id}
+                  onClick={() => setActiveConv(c)}
+                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${activeConv?.id === c.id ? 'bg-slate-50 border-slate-200' : 'bg-white border-transparent hover:border-slate-100'}`}
+                >
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-semibold text-sm text-slate-900">{c.customerName}</span>
+                    <Badge variant={c.channel === 'WHATSAPP' ? 'success' : c.channel === 'EMAIL' ? 'info' : 'warning'}>
+                      {c.channel}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-slate-500 whitespace-nowrap overflow-hidden text-ellipsis mb-1">
+                    {c.lastMessage}
+                  </div>
+                  <div className="text-[10px] text-slate-400">{c.lastMessageAt}</div>
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '0.25rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {c.lastMessage}
-                </div>
-                <div style={{ fontSize: '0.65rem', color: '#9CA3AF', marginTop: '0.25rem' }}>{c.lastMessageAt}</div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Message Thread Window */}
+          <Card className="!p-0 flex flex-col overflow-hidden">
+            <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-white">
+              <div>
+                <h3 className="text-lg font-semibold m-0 text-slate-900">{activeConv.customerName}</h3>
+                <span className="text-xs text-slate-500">Channel: {activeConv.channel} | Status: {activeConv.status}</span>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Message Thread Window */}
-        <div style={{ backgroundColor: '#FFFFFF', borderRadius: '12px', border: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '1rem 1.5rem', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0, color: '#111827' }}>{activeConv.customerName}</h3>
-              <span style={{ fontSize: '0.75rem', color: '#6B7280' }}>Channel: {activeConv.channel} | Status: {activeConv.status}</span>
-            </div>
-          </div>
-
-          <div style={{ flex: 1, padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ alignSelf: 'flex-start', backgroundColor: '#F3F4F6', padding: '0.75rem 1rem', borderRadius: '12px', maxWidth: '70%', fontSize: '0.875rem' }}>
-              <div>{activeConv.lastMessage}</div>
-              <div style={{ fontSize: '0.65rem', color: '#9CA3AF', marginTop: '0.25rem' }}>Received via {activeConv.channel} • 10:14 AM</div>
             </div>
 
-            <div style={{ alignSelf: 'flex-end', backgroundColor: '#2563EB', color: '#FFFFFF', padding: '0.75rem 1rem', borderRadius: '12px', maxWidth: '70%', fontSize: '0.875rem' }}>
-              <div>Hello {activeConv.customerName}, order #ORD-4921 has been processed and is scheduled for pickup today.</div>
-              <div style={{ fontSize: '0.65rem', color: '#93C5FD', marginTop: '0.25rem', textAlign: 'right' }}>Sent • Delivered</div>
-            </div>
-          </div>
+            <div className="flex-1 p-6 overflow-y-auto flex flex-col gap-4 bg-slate-50/50">
+              <div className="self-start bg-white border border-slate-100 p-3 rounded-lg rounded-tl-none max-w-[70%] text-sm text-slate-800 shadow-sm">
+                <div>{activeConv.lastMessage}</div>
+                <div className="text-[10px] text-slate-400 mt-1">Received via {activeConv.channel} • 10:14 AM</div>
+              </div>
 
-          <div style={{ padding: '1rem', borderTop: '1px solid #E5E7EB', display: 'flex', gap: '0.75rem' }}>
-            <input
-              type="text"
-              placeholder="Type message or select template..."
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: '1px solid #D1D5DB', fontSize: '0.875rem' }}
-            />
-            <button
-              onClick={() => setNewMessage('')}
-              style={{ backgroundColor: '#2563EB', color: '#FFFFFF', border: 'none', borderRadius: '8px', padding: '0.75rem 1.5rem', fontWeight: 600, cursor: 'pointer' }}
-            >
-              Send
-            </button>
-          </div>
+              <div className="self-end bg-brand-500 text-white p-3 rounded-lg rounded-tr-none max-w-[70%] text-sm shadow-sm">
+                <div>Hello {activeConv.customerName}, order #ORD-4921 has been processed and is scheduled for pickup today.</div>
+                <div className="text-[10px] text-brand-100 mt-1 text-right">Sent • Delivered</div>
+              </div>
+            </div>
+
+            <div className="p-4 border-t border-slate-100 flex gap-3 bg-white">
+              <Input
+                type="text"
+                placeholder="Type message or select template..."
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                variant="primary"
+                onClick={() => setNewMessage('')}
+              >
+                Send
+              </Button>
+            </div>
+          </Card>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
