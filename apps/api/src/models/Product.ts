@@ -17,7 +17,7 @@ export interface IProductAttribute {
 
 export interface IProductDocument extends Document {
   tenantId: string;
-  storeId?: string;
+  storeId: string;
   name: string;
   slug: string;
   sku: string;
@@ -46,7 +46,7 @@ export interface IProductDocument extends Document {
 
 const productSchema = new Schema<IProductDocument>({
   tenantId: { type: String, required: true, index: true },
-  storeId: { type: String, index: true },
+  storeId: { type: String, required: true, index: true },
   name: { type: String, required: true },
   slug: { type: String, required: true },
   sku: { type: String, required: true },
@@ -91,9 +91,9 @@ const productSchema = new Schema<IProductDocument>({
   timestamps: true
 });
 
-productSchema.index({ tenantId: 1, normalizedSKU: 1 }, { unique: true });
-productSchema.index({ tenantId: 1, slug: 1 }, { unique: true });
-productSchema.index({ tenantId: 1, status: 1, isArchived: 1 });
-productSchema.index({ tenantId: 1, categoryId: 1 });
+productSchema.index({ tenantId: 1, storeId: 1, normalizedSKU: 1 }, { unique: true });
+productSchema.index({ tenantId: 1, storeId: 1, slug: 1 }, { unique: true });
+productSchema.index({ tenantId: 1, storeId: 1, status: 1, isArchived: 1 });
+productSchema.index({ tenantId: 1, storeId: 1, categoryId: 1 });
 
 export const ProductModel = mongoose.model<IProductDocument>('Product', productSchema);

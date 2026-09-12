@@ -13,7 +13,7 @@ export class InventoryController {
       const tenantId = req.user!.tenantId;
       const actorUserId = req.user!.userId;
       const input = stockAdjustmentSchema.parse(req.body);
-      const result = await InventoryService.adjustStock(tenantId, input, actorUserId);
+      const result = await InventoryService.adjustStock(tenantId, { ...input, warehouseId: input.locationId }, actorUserId);
       return res.json({ success: true, data: result });
     } catch (err) {
       next(err);
@@ -25,7 +25,7 @@ export class InventoryController {
       const tenantId = req.user!.tenantId;
       const actorUserId = req.user!.userId;
       const input = stockTransferSchema.parse(req.body);
-      const result = await InventoryService.transferStock(tenantId, input, actorUserId);
+      const result = await InventoryService.transferStock(tenantId, { ...input, fromWarehouseId: input.fromLocationId, toWarehouseId: input.toLocationId }, actorUserId);
       return res.json({ success: true, data: result });
     } catch (err) {
       next(err);
@@ -37,7 +37,7 @@ export class InventoryController {
       const tenantId = req.user!.tenantId;
       const actorUserId = req.user!.userId;
       const input = inventoryReservationSchema.parse(req.body);
-      const result = await InventoryService.reserveStock(tenantId, input, actorUserId);
+      const result = await InventoryService.reserveStock(tenantId, { ...input, warehouseId: input.locationId }, actorUserId);
       return res.status(201).json({ success: true, data: result });
     } catch (err) {
       next(err);
@@ -59,8 +59,8 @@ export class InventoryController {
   static async getInventoryByLocation(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const tenantId = req.user!.tenantId;
-      const locationId = req.params.locationId;
-      const items = await InventoryService.getInventoryByLocation(tenantId, locationId);
+      const warehouseId = req.params.locationId;
+      const items = await InventoryService.getInventoryByLocation(tenantId, warehouseId);
       return res.json({ success: true, data: items });
     } catch (err) {
       next(err);
@@ -77,7 +77,7 @@ export class InventoryController {
 
       const result = await InventoryService.getInventoryMovements(tenantId, {
         productId,
-        locationId,
+        warehouseId: locationId,
         page,
         limit
       });

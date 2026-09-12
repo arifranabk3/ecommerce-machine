@@ -178,7 +178,7 @@ export class ReturnService {
               inventoryId: inv._id.toString(),
               productId: returnItem.productId,
               variantId: returnItem.variantId,
-              locationId: inv.locationId,
+              warehouseId: (inv as any).warehouseId,
               type: 'RETURN_RESTOCK',
               quantity: insp.approvedQuantity,
               previousQuantityOnHand: previousQty,

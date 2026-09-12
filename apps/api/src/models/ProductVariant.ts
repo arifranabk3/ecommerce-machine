@@ -8,6 +8,7 @@ export interface IVariantOption {
 
 export interface IProductVariantDocument extends Document {
   tenantId: string;
+  storeId: string;
   productId: string;
   name: string;
   sku: string;
@@ -30,6 +31,7 @@ export interface IProductVariantDocument extends Document {
 
 const productVariantSchema = new Schema<IProductVariantDocument>({
   tenantId: { type: String, required: true, index: true },
+  storeId: { type: String, required: true, index: true },
   productId: { type: String, required: true, index: true },
   name: { type: String, required: true },
   sku: { type: String, required: true },
@@ -60,7 +62,7 @@ const productVariantSchema = new Schema<IProductVariantDocument>({
   timestamps: true
 });
 
-productVariantSchema.index({ tenantId: 1, normalizedSKU: 1 }, { unique: true });
-productVariantSchema.index({ tenantId: 1, productId: 1, isArchived: 1 });
+productVariantSchema.index({ tenantId: 1, storeId: 1, normalizedSKU: 1 }, { unique: true });
+productVariantSchema.index({ tenantId: 1, storeId: 1, productId: 1, isArchived: 1 });
 
 export const ProductVariantModel = mongoose.model<IProductVariantDocument>('ProductVariant', productVariantSchema);

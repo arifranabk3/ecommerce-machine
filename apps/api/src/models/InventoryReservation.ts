@@ -3,9 +3,10 @@ import { ReservationStatus } from '@sellzy/shared';
 
 export interface IInventoryReservationDocument extends Document {
   tenantId: string;
+  storeId: string;
   productId: string;
   variantId?: string;
-  locationId: string;
+  warehouseId: string;
   quantity: number;
   status: ReservationStatus;
   referenceType?: string;
@@ -19,9 +20,10 @@ export interface IInventoryReservationDocument extends Document {
 
 const inventoryReservationSchema = new Schema<IInventoryReservationDocument>({
   tenantId: { type: String, required: true, index: true },
+  storeId: { type: String, required: true, index: true },
   productId: { type: String, required: true, index: true },
   variantId: { type: String, index: true, default: null },
-  locationId: { type: String, required: true, index: true },
+  warehouseId: { type: String, required: true, index: true },
   quantity: { type: Number, required: true, min: 1 },
   status: { 
     type: String, 
@@ -37,8 +39,8 @@ const inventoryReservationSchema = new Schema<IInventoryReservationDocument>({
   timestamps: true
 });
 
-inventoryReservationSchema.index({ tenantId: 1, status: 1, expiresAt: 1 });
-inventoryReservationSchema.index({ tenantId: 1, idempotencyKey: 1 }, { sparse: true });
-inventoryReservationSchema.index({ tenantId: 1, productId: 1, locationId: 1 });
+inventoryReservationSchema.index({ tenantId: 1, storeId: 1, status: 1, expiresAt: 1 });
+inventoryReservationSchema.index({ tenantId: 1, storeId: 1, idempotencyKey: 1 }, { sparse: true });
+inventoryReservationSchema.index({ tenantId: 1, storeId: 1, productId: 1, warehouseId: 1 });
 
 export const InventoryReservationModel = mongoose.model<IInventoryReservationDocument>('InventoryReservation', inventoryReservationSchema);

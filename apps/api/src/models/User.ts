@@ -8,6 +8,7 @@ export interface IUserDocument extends Document {
   passwordHash: string;
   status: 'ACTIVE' | 'PENDING_VERIFICATION' | 'INACTIVE' | 'INVITED' | 'SUSPENDED' | 'LOCKED' | 'DISABLED';
   roles: string[];
+  allowedStoreIds?: string[]; // If undefined or empty, implies access to all stores (if isOwner) or depends on roles. Best practice: explicitly define allowed stores or use a wildcard '*'.
   isOwner: boolean;
   mfaEnabled: boolean;
   mfaSecret?: string;
@@ -35,6 +36,7 @@ const userSchema = new Schema<IUserDocument>({
     default: 'PENDING_VERIFICATION' 
   },
   roles: [{ type: String, required: true }],
+  allowedStoreIds: [{ type: String }],
   isOwner: { type: Boolean, default: false },
   mfaEnabled: { type: Boolean, default: false },
   mfaSecret: { type: String, select: false },

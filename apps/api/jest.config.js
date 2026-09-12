@@ -6,5 +6,6 @@ module.exports = {
     '^@sellzy/shared$': '<rootDir>/../../packages/shared/src',
     '^@sellzy/validation$': '<rootDir>/../../packages/validation/src',
     '^@sellzy/config$': '<rootDir>/../../packages/config/src'
-  }
+  },
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.ts']
 };

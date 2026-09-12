@@ -7,7 +7,7 @@ import { VendorModel } from '../models/Vendor';
 import { VendorProductModel } from '../models/VendorProduct';
 import { ProductModel } from '../models/Product';
 import { ProductVariantModel } from '../models/ProductVariant';
-import { LocationModel } from '../models/Location';
+import { WarehouseModel } from '../models/Warehouse';
 import { InventoryModel } from '../models/Inventory';
 import { InventoryMovementModel } from '../models/InventoryMovement';
 import { OrderModel } from '../models/Order';
@@ -33,7 +33,7 @@ export class ProcurementService {
     const vendor = (await VendorModel.findOne({ tenantId, _id: input.vendorId }).exec()) as any;
     if (!vendor) throw new Error('Vendor not found');
 
-    const location = await LocationModel.findOne({ tenantId, _id: input.destinationLocationId }).exec();
+    const location = await WarehouseModel.findOne({ tenantId, _id: input.destinationLocationId }).exec();
     if (!location) throw new Error('Destination location not found');
 
     const { poNumber, normalizedPoNumber } = await VendorNumberService.generatePoNumber(tenantId);

@@ -26,7 +26,7 @@ const AddressSnapshotSchema = new Schema(
 const OrderSchema: Schema = new Schema(
   {
     tenantId: { type: String, required: true, index: true },
-    storeId: { type: String, index: true },
+    storeId: { type: String, required: true, index: true },
     orderNumber: { type: String, required: true, trim: true },
     normalizedOrderNumber: { type: String, required: true, trim: true },
     status: {
