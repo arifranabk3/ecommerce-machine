@@ -17,6 +17,7 @@ export interface IProductAttribute {
 
 export interface IProductDocument extends Document {
   tenantId: string;
+  storeId?: string;
   name: string;
   slug: string;
   sku: string;
@@ -45,6 +46,7 @@ export interface IProductDocument extends Document {
 
 const productSchema = new Schema<IProductDocument>({
   tenantId: { type: String, required: true, index: true },
+  storeId: { type: String, index: true },
   name: { type: String, required: true },
   slug: { type: String, required: true },
   sku: { type: String, required: true },

@@ -25,7 +25,7 @@ export default function Home() {
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Good morning, Arif! 👋</h1>
-            <p className="text-slate-500 text-sm mt-1 font-medium">Here's what's happening with your business today.</p>
+            <p className="text-slate-500 text-sm mt-1 font-medium">Here&apos;s what&apos;s happening with your business today.</p>
           </div>
           <div className="flex items-center gap-3">
             <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-colors">
@@ -406,7 +406,7 @@ export default function Home() {
           {/* Today's Sales Bar Chart */}
           <div className="col-span-12 lg:col-span-5 bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex flex-col">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-base font-bold text-slate-900">Today's Sales</h2>
+              <h2 className="text-base font-bold text-slate-900">Today&apos;s Sales</h2>
               <div className="px-3 py-1 bg-slate-50 border border-slate-200 rounded text-xs font-semibold text-slate-600 flex items-center gap-1 cursor-pointer">
                 Today <ChevronDown className="w-3 h-3" />
               </div>

@@ -6,6 +6,7 @@ import { getThemeConfig, ThemeConfig } from '../../../themes';
 // Type for the dynamic props
 type Props = {
   params: { slug?: string[] };
+  searchParams: { [key: string]: string | string[] | undefined };
 };
 
 // Dynamic mapping of known basic components
@@ -15,9 +16,11 @@ type Props = {
 // or use a structured registry. Because this is the foundational engine, we'll implement
 // a secure dynamic resolver function.
 
-export default async function ThemePage({ params }: Props) {
+export default async function ThemePage({ params, searchParams }: Props) {
+  const isPreview = searchParams.preview === 'true';
+
   // 1. Resolve Store (Domain -> Tenant)
-  const store = await resolveStorefront();
+  const store = await resolveStorefront(undefined, isPreview);
   
   // 2. Load Theme Config
   const theme = getThemeConfig(store.themeId);

@@ -19,7 +19,7 @@ export default function AiCopilotDashboardPage() {
           <Card className="p-5 bg-white border border-slate-200">
             <h2 className="text-lg font-semibold text-slate-900 mb-2">Daily Business Brief</h2>
             <p className="text-sm text-slate-600 mb-4">Automated daily summary of orders, revenue, inventory risks, and pending vendor approvals.</p>
-            <Link href="/ai/brief" className="text-brand-500 font-semibold hover:underline">View Today's Brief →</Link>
+            <Link href="/ai/brief" className="text-brand-500 font-semibold hover:underline">View Today&apos;s Brief →</Link>
           </Card>
 
           <Card className="p-5 bg-white border border-slate-200">
