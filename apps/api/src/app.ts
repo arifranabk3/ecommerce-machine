@@ -9,6 +9,7 @@ import { errorHandler } from './middleware/error';
 import { healthRouter } from './routes/health.routes';
 import { authRouter } from './routes/auth.routes';
 import { tenantRouter } from './routes/tenant.routes';
+import storefrontRouter from './routes/storefront.routes';
 import userRouter from './routes/user.routes';
 import roleRouter from './routes/role.routes';
 import permissionRouter from './routes/permission.routes';
@@ -96,6 +97,7 @@ export function createApp(): Application {
   app.use('/api/v1/platform', platformRouter);
   app.use('/api/v1', tenantBillingRouter);
   app.use('/api/v1', vendorLedgerRouter);
+  app.use('/api/v1/storefront', storefrontRouter);
   app.use('/api/v1', tenantRouter);
 
   // Centralized Error Handling
