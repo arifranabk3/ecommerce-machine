@@ -1,14 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
-import { authorizePermissions } from '../../src/middleware/auth';
-import { storeScope } from '../../src/middleware/store';
-import { AppError } from '../../src/middleware/error';
-import { UserModel } from '../../src/models/User';
-import { StoreModel } from '../../src/models/Store';
-import { RbacService } from '../../src/services/rbac.service';
+import { authorizePermissions } from '../../../src/middleware/auth';
+import { storeScope } from '../../../src/middleware/store';
+import { AppError } from '../../../src/middleware/error';
+import { UserModel } from '../../../src/models/User';
+import { StoreModel } from '../../../src/models/Store';
+import { RbacService } from '../../../src/services/rbac.service';
 
-jest.mock('../../src/models/User');
-jest.mock('../../src/models/Store');
-jest.mock('../../src/services/rbac.service');
+jest.mock('../../../src/models/User');
+jest.mock('../../../src/models/Store');
+jest.mock('../../../src/services/rbac.service');
 
 describe('Tenant and Store Isolation Middleware', () => {
   let req: Partial<Request>;

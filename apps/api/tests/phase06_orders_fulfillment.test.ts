@@ -13,7 +13,7 @@ import { ProductModel } from '../src/models/Product';
 import { ProductVariantModel } from '../src/models/ProductVariant';
 import { InventoryModel } from '../src/models/Inventory';
 import { InventoryReservationModel } from '../src/models/InventoryReservation';
-import { LocationModel } from '../src/models/Location';
+import { WarehouseModel } from '../src/models/Warehouse';
 import { SessionModel } from '../src/models/Session';
 import { UserModel } from '../src/models/User';
 import { RoleModel } from '../src/models/Role';
@@ -21,6 +21,7 @@ import { TenantMembershipModel } from '../src/models/TenantMembership';
 import { EntitlementService } from '../src/services/entitlement.service';
 import { OrderService } from '../src/services/order.service';
 import { OrderStateMachine } from '../src/services/order-state-machine';
+import { StoreModel } from '../src/models/Store';
 import { FulfillmentService } from '../src/services/fulfillment.service';
 import { InventoryService } from '../src/services/inventory.service';
 import { CacheService } from '../src/services/cache.service';
@@ -203,6 +204,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
 
   it('8. client tenantId override rejected', async () => {
     jest.spyOn(OrderModel, 'findOne').mockResolvedValue(null as any);
+    jest.spyOn(StoreModel, 'findOne').mockResolvedValue({ _id: 'store_test_fallback', tenantId: tenantA, currency: 'USD' } as any);
     jest.spyOn(ProductModel, 'findOne').mockResolvedValue({ _id: 'p1', tenantId: tenantA, name: 'P1', sellingPrice: 1000, sku: 'S1', costPrice: 500 } as any);
     jest.spyOn(InventoryService, 'reserveStock').mockResolvedValue({ _id: 'res1' } as any);
     jest.spyOn(OrderModel, 'create').mockImplementation(((data: any) => Promise.resolve({ _id: 'ord_override', ...data })) as any);
@@ -295,6 +297,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   // ====================================================
 
   it('18. server calculates totals', async () => {
+    jest.spyOn(StoreModel, 'findOne').mockResolvedValue({ _id: 'store_test_fallback', tenantId: tenantA, currency: 'USD' } as any);
     jest.spyOn(ProductModel, 'findOne').mockResolvedValue({ _id: 'p1', tenantId: tenantA, sellingPrice: 2000, costPrice: 1000, name: 'P1', sku: 'SKU1' } as any);
     jest.spyOn(InventoryService, 'reserveStock').mockResolvedValue({ _id: 'res1' } as any);
     jest.spyOn(OrderModel, 'create').mockImplementation(((data: any) => Promise.resolve({ _id: 'ord_calc', ...data })) as any);
@@ -337,6 +340,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   });
 
   it('22. invalid product rejected', async () => {
+    jest.spyOn(StoreModel, 'findOne').mockResolvedValue({ _id: 'store_test_fallback', tenantId: tenantA, currency: 'USD' } as any);
     jest.spyOn(ProductModel, 'findOne').mockResolvedValue(null as any);
     await expect(
       OrderService.createOrder(tenantA, { customerSnapshot: { name: 'Invalid P' }, locationId: 'l1', items: [{ productId: 'missing_p', quantity: 1 }] })
@@ -344,6 +348,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   });
 
   it('23. invalid variant rejected', async () => {
+    jest.spyOn(StoreModel, 'findOne').mockResolvedValue({ _id: 'store_test_fallback', tenantId: tenantA, currency: 'USD' } as any);
     jest.spyOn(ProductModel, 'findOne').mockResolvedValue({ _id: 'p1', tenantId: tenantA, sellingPrice: 1000 } as any);
     jest.spyOn(ProductVariantModel, 'findOne').mockResolvedValue(null as any);
     await expect(
@@ -352,6 +357,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   });
 
   it('24. archived product rejected', async () => {
+    jest.spyOn(StoreModel, 'findOne').mockResolvedValue({ _id: 'store_test_fallback', tenantId: tenantA, currency: 'USD' } as any);
     jest.spyOn(ProductModel, 'findOne').mockImplementation(((query: any) => {
       if (query.isArchived === false) return Promise.resolve(null);
       return Promise.resolve({ _id: 'p_arch', tenantId: tenantA, isArchived: true });
@@ -363,6 +369,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   });
 
   it('25. archived variant rejected', async () => {
+    jest.spyOn(StoreModel, 'findOne').mockResolvedValue({ _id: 'store_test_fallback', tenantId: tenantA, currency: 'USD' } as any);
     jest.spyOn(ProductModel, 'findOne').mockResolvedValue({ _id: 'p1', tenantId: tenantA } as any);
     jest.spyOn(ProductVariantModel, 'findOne').mockImplementation(((query: any) => {
       if (query.isArchived === false) return Promise.resolve(null);
@@ -375,6 +382,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   });
 
   it('26. wrong tenant product rejected', async () => {
+    jest.spyOn(StoreModel, 'findOne').mockResolvedValue({ _id: 'store_test_fallback', tenantId: tenantA, currency: 'USD' } as any);
     jest.spyOn(ProductModel, 'findOne').mockImplementation(((query: any) => {
       if (query.tenantId === tenantA && query._id === 'p_tenant_b') return Promise.resolve(null);
       return Promise.resolve({ _id: 'p_tenant_b', tenantId: tenantB });
@@ -386,6 +394,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   });
 
   it('27. wrong tenant variant rejected', async () => {
+    jest.spyOn(StoreModel, 'findOne').mockResolvedValue({ _id: 'store_test_fallback', tenantId: tenantA, currency: 'USD' } as any);
     jest.spyOn(ProductModel, 'findOne').mockResolvedValue({ _id: 'p1', tenantId: tenantA } as any);
     jest.spyOn(ProductVariantModel, 'findOne').mockImplementation(((query: any) => {
       if (query.tenantId === tenantA && query._id === 'v_tenant_b') return Promise.resolve(null);
@@ -398,6 +407,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   });
 
   it('28. currency mismatch handled cleanly', async () => {
+    jest.spyOn(StoreModel, 'findOne').mockResolvedValue({ _id: 'store_test_fallback', tenantId: tenantA, currency: 'USD' } as any);
     jest.spyOn(ProductModel, 'findOne').mockResolvedValue({ _id: 'p1', tenantId: tenantA, sellingPrice: 1000, costPrice: 500, name: 'P1', sku: 'S1' } as any);
     jest.spyOn(InventoryService, 'reserveStock').mockResolvedValue({ _id: 'res1' } as any);
     jest.spyOn(OrderModel, 'create').mockImplementation(((data: any) => Promise.resolve({ _id: 'ord_curr', ...data })) as any);
@@ -482,6 +492,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   // ====================================================
 
   it('37. insufficient stock rejected safely', async () => {
+    jest.spyOn(StoreModel, 'findOne').mockResolvedValue({ _id: 'store_test_fallback', tenantId: tenantA, currency: 'USD' } as any);
     jest.spyOn(ProductModel, 'findOne').mockResolvedValue({ _id: 'p1', tenantId: tenantA, sellingPrice: 1000, costPrice: 500, name: 'P1', sku: 'S1' } as any);
     jest.spyOn(InventoryService, 'reserveStock').mockRejectedValue(new Error('Insufficient available stock'));
 
@@ -526,6 +537,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   });
 
   it('40. reservation linked to correct order', async () => {
+    jest.spyOn(StoreModel, 'findOne').mockResolvedValue({ _id: 'store_test_fallback', tenantId: tenantA, currency: 'USD' } as any);
     jest.spyOn(ProductModel, 'findOne').mockResolvedValue({ _id: 'p1', tenantId: tenantA, sellingPrice: 1000, costPrice: 500, name: 'P1', sku: 'S1' } as any);
     const resSpy = jest.spyOn(InventoryService, 'reserveStock').mockResolvedValue({ _id: 'res_linked' } as any);
     jest.spyOn(OrderModel, 'create').mockImplementation(((data: any) => Promise.resolve({ _id: 'ord_link', ...data })) as any);
@@ -689,6 +701,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   // ====================================================
 
   it('53. order creation audited', async () => {
+    jest.spyOn(StoreModel, 'findOne').mockResolvedValue({ _id: 'store_test_fallback', tenantId: tenantA, currency: 'USD' } as any);
     jest.spyOn(ProductModel, 'findOne').mockResolvedValue({ _id: 'p1', tenantId: tenantA, sellingPrice: 1000, costPrice: 500, name: 'P1', sku: 'S1' } as any);
     jest.spyOn(InventoryService, 'reserveStock').mockResolvedValue({ _id: 'res1' } as any);
     jest.spyOn(OrderModel, 'create').mockImplementation(((data: any) => Promise.resolve({ _id: 'ord_audit', ...data })) as any);
