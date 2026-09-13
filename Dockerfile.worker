@@ -6,8 +6,7 @@ FROM base AS builder
 WORKDIR /app
 RUN npm install -g turbo
 COPY . .
-
-RUN turbo prune @sellzy/api --docker
+RUN turbo prune @sellzy/worker --docker
 
 # Installer stage
 FROM base AS installer
@@ -22,7 +21,7 @@ RUN npm install
 
 # Build the project
 COPY --from=builder /app/out/full/ .
-RUN npx turbo run build --filter=@sellzy/api
+RUN npx turbo run build --filter=@sellzy/worker
 
 # Final runner stage (Optional, but good for reducing image size)
 FROM base AS runner
@@ -33,7 +32,4 @@ ENV NODE_ENV=production
 # Copy the built app
 COPY --from=installer /app .
 
-EXPOSE 4000
-EXPOSE 3000
-
-CMD ["sh", "-c", "npm run start --workspace=@sellzy/api"]
+CMD ["sh", "-c", "npm run start --workspace=@sellzy/worker"]
