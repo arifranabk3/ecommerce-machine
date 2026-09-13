@@ -2,9 +2,10 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IInventoryDocument extends Document {
   tenantId: string;
+  storeId: string;
   productId: string;
   variantId?: string;
-  locationId: string;
+  warehouseId: string;
   quantityOnHand: number;
   quantityReserved: number;
   quantityAvailable: number;
@@ -18,9 +19,10 @@ export interface IInventoryDocument extends Document {
 
 const inventorySchema = new Schema<IInventoryDocument>({
   tenantId: { type: String, required: true, index: true },
+  storeId: { type: String, required: true, index: true },
   productId: { type: String, required: true, index: true },
   variantId: { type: String, index: true, default: null },
-  locationId: { type: String, required: true, index: true },
+  warehouseId: { type: String, required: true, index: true },
   quantityOnHand: { type: Number, default: 0, min: 0 },
   quantityReserved: { type: Number, default: 0, min: 0 },
   quantityAvailable: { type: Number, default: 0, min: 0 },
@@ -32,8 +34,8 @@ const inventorySchema = new Schema<IInventoryDocument>({
   timestamps: true
 });
 
-inventorySchema.index({ tenantId: 1, productId: 1, variantId: 1, locationId: 1 }, { unique: true });
-inventorySchema.index({ tenantId: 1, locationId: 1 });
-inventorySchema.index({ tenantId: 1, quantityAvailable: 1 });
+inventorySchema.index({ tenantId: 1, storeId: 1, productId: 1, variantId: 1, warehouseId: 1 }, { unique: true });
+inventorySchema.index({ tenantId: 1, storeId: 1, warehouseId: 1 });
+inventorySchema.index({ tenantId: 1, storeId: 1, quantityAvailable: 1 });
 
 export const InventoryModel = mongoose.model<IInventoryDocument>('Inventory', inventorySchema);

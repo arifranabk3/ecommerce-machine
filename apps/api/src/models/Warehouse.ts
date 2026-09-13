@@ -1,8 +1,9 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import { LocationType } from '@sellzy/shared';
 
-export interface ILocationDocument extends Document {
+export interface IWarehouseDocument extends Document {
   tenantId: string;
+  storeId: string;
   name: string;
   code: string;
   normalizedCode: string;
@@ -23,8 +24,9 @@ export interface ILocationDocument extends Document {
   updatedAt: Date;
 }
 
-const locationSchema = new Schema<ILocationDocument>({
+const warehouseSchema = new Schema<IWarehouseDocument>({
   tenantId: { type: String, required: true, index: true },
+  storeId: { type: String, required: true, index: true },
   name: { type: String, required: true },
   code: { type: String, required: true },
   normalizedCode: { type: String, required: true },
@@ -49,7 +51,7 @@ const locationSchema = new Schema<ILocationDocument>({
   timestamps: true
 });
 
-locationSchema.index({ tenantId: 1, normalizedCode: 1 }, { unique: true });
-locationSchema.index({ tenantId: 1, isDefault: 1 });
+warehouseSchema.index({ tenantId: 1, storeId: 1, normalizedCode: 1 }, { unique: true });
+warehouseSchema.index({ tenantId: 1, storeId: 1, isDefault: 1 });
 
-export const LocationModel = mongoose.model<ILocationDocument>('Location', locationSchema);
+export const WarehouseModel = mongoose.model<IWarehouseDocument>('Warehouse', warehouseSchema);

@@ -3,6 +3,7 @@ import { PaymentStatus, PaymentMethod } from '@sellzy/shared';
 
 export interface IPaymentDocument extends Document {
   tenantId: string;
+  storeId: string;
   paymentNumber: string;
   orderId: string;
   customerId?: string;
@@ -27,6 +28,7 @@ export interface IPaymentDocument extends Document {
 const PaymentSchema: Schema = new Schema(
   {
     tenantId: { type: String, required: true, index: true },
+    storeId: { type: String, required: true, index: true },
     paymentNumber: { type: String, required: true },
     orderId: { type: String, required: true, index: true },
     customerId: { type: String, index: true },
@@ -61,9 +63,9 @@ const PaymentSchema: Schema = new Schema(
   }
 );
 
-PaymentSchema.index({ tenantId: 1, paymentNumber: 1 }, { unique: true });
-PaymentSchema.index({ tenantId: 1, orderId: 1, createdAt: -1 });
-PaymentSchema.index({ tenantId: 1, provider: 1, providerPaymentId: 1 });
-PaymentSchema.index({ tenantId: 1, status: 1, createdAt: -1 });
+PaymentSchema.index({ tenantId: 1, storeId: 1, paymentNumber: 1 }, { unique: true });
+PaymentSchema.index({ tenantId: 1, storeId: 1, orderId: 1, createdAt: -1 });
+PaymentSchema.index({ tenantId: 1, storeId: 1, provider: 1, providerPaymentId: 1 });
+PaymentSchema.index({ tenantId: 1, storeId: 1, status: 1, createdAt: -1 });
 
 export const PaymentModel = mongoose.model<IPaymentDocument>('Payment', PaymentSchema);

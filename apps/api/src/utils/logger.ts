@@ -8,5 +8,24 @@ export const logger = pino({
     options: {
       colorize: true
     }
-  } : undefined
+  } : undefined,
+  redact: {
+    paths: [
+      'password',
+      'passwordHash',
+      'token',
+      'accessToken',
+      'refreshToken',
+      'jwt',
+      'apiKey',
+      'secret',
+      'req.headers.authorization',
+      'webhookSecret',
+      'paymentSecret',
+      'mfaSecret',
+      'providerCredentials',
+      'clientSecret'
+    ],
+    censor: '***REDACTED***'
+  }
 });

@@ -6,6 +6,7 @@ import pinoHttp from 'pino-http';
 import { env } from '@sellzy/config';
 import { logger } from './utils/logger';
 import { errorHandler } from './middleware/error';
+import { contextMiddleware } from './middleware/context';
 import { healthRouter } from './routes/health.routes';
 import { authRouter } from './routes/auth.routes';
 import { tenantRouter } from './routes/tenant.routes';
@@ -15,7 +16,7 @@ import roleRouter from './routes/role.routes';
 import permissionRouter from './routes/permission.routes';
 import productRouter from './routes/product.routes';
 import categoryRouter from './routes/category.routes';
-import locationRouter from './routes/location.routes';
+import warehouseRouter from './routes/warehouse.routes';
 import inventoryRouter from './routes/inventory.routes';
 import { orderRoutes } from './routes/order.routes';
 import { fulfillmentRoutes } from './routes/fulfillment.routes';
@@ -62,6 +63,9 @@ export function createApp(): Application {
   // Logger Middleware
   app.use(pinoHttp({ logger }));
 
+  // ALS Context Middleware (Runs after any authentication/store extraction middlewares globally if mounted, but for now we'll mount it high up to capture whatever is on req)
+  app.use(contextMiddleware);
+
   // Health & Probe Endpoints
   app.get('/live', (_req, res) => { res.json({ status: 'alive', timestamp: new Date().toISOString() }); });
   app.get('/ready', (_req, res) => { res.json({ status: 'ready', timestamp: new Date().toISOString() }); });
@@ -74,7 +78,7 @@ export function createApp(): Application {
   app.use('/api/v1/permissions', permissionRouter);
   app.use('/api/v1/products', productRouter);
   app.use('/api/v1/categories', categoryRouter);
-  app.use('/api/v1/locations', locationRouter);
+  app.use('/api/v1/warehouses', warehouseRouter);
   app.use('/api/v1/inventory', inventoryRouter);
   app.use('/api/v1/orders', orderRoutes);
   app.use('/api/v1/fulfillments', fulfillmentRoutes);

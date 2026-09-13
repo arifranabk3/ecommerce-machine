@@ -13,6 +13,9 @@ import { SecurityService } from './security.service';
 import { emitTenantEvent } from '../events/emitter';
 import { AppError } from '../middleware/error';
 import { CustomerService } from './customer.service';
+import { PricingService } from './pricing.service';
+import { TaxService } from './tax.service';
+import { getContext } from '../utils/context';
 import { createOrderSchema, updateOrderSchema, orderTransitionSchema, createOrderNoteSchema, CreateOrderInput, UpdateOrderInput, OrderTransitionInput, CreateOrderNoteInput } from '@sellzy/validation';
 import { OrderStatus, PaymentStatus, FulfillmentStatus, ReservationStatus, SystemEvents } from '@sellzy/shared';
 
@@ -39,6 +42,13 @@ export class OrderService {
     actorUserId?: string
   ): Promise<{ order: IOrderDocument; items: any[] }> {
     const input: CreateOrderInput = createOrderSchema.parse(rawInput);
+    
+    const context = getContext();
+    const storeId = context?.storeId;
+    if (!storeId) {
+      throw new AppError('Store context is required to create an order', 400, 'MISSING_STORE_CONTEXT');
+    }
+
     // 1. Check Idempotency Key
     if (input.idempotencyKey) {
       const existingIdempotency = await OrderIdempotencyModel.findOne({
@@ -73,9 +83,10 @@ export class OrderService {
     let calculatedSubtotalMinor = 0;
     const resolvedItems: any[] = [];
     const reservationRecords: { productId: string; variantId?: string; quantity: number }[] = [];
+    let orderCurrency = 'USD'; // Will be resolved by PricingService
 
     for (const itemInput of input.items) {
-      const product = await ProductModel.findOne({ tenantId, _id: itemInput.productId, isArchived: false });
+      const product = await ProductModel.findOne({ tenantId, storeId, _id: itemInput.productId, isArchived: false });
       if (!product) {
         throw new AppError(`Product not found or archived: ${itemInput.productId}`, 404, 'PRODUCT_NOT_FOUND');
       }
@@ -84,6 +95,7 @@ export class OrderService {
       if (itemInput.variantId) {
         variant = await ProductVariantModel.findOne({
           tenantId,
+          storeId,
           productId: itemInput.productId,
           _id: itemInput.variantId,
           isArchived: false
@@ -94,11 +106,15 @@ export class OrderService {
       }
 
       // Server is authoritative for price snapshots from catalog
-      const unitPriceMinor = variant ? variant.sellingPrice : product.sellingPrice;
+      const priceRes = await PricingService.resolvePrice(tenantId, storeId, itemInput.productId, itemInput.variantId || undefined);
+      orderCurrency = priceRes.currency;
 
+      const unitPriceMinor = priceRes.unitPriceMinor;
       const unitCostMinor = variant ? (variant.costPrice || product.costPrice) : product.costPrice;
-      const lineDiscountMinor = itemInput.discountMinor || 0;
-      const lineTaxMinor = itemInput.taxMinor || 0;
+      
+      // PRICE TAMPERING PROTECTION: Ignore client-supplied discount/tax at the line level.
+      const lineDiscountMinor = 0; 
+      const lineTaxMinor = 0;
 
       const rawLineSubtotal = unitPriceMinor * itemInput.quantity;
       const lineSubtotalMinor = Math.max(0, rawLineSubtotal - lineDiscountMinor);
@@ -130,10 +146,20 @@ export class OrderService {
     }
 
     // 4. Calculate Server Totals
-    const discountMinor = input.discountMinor || 0;
-    const shippingMinor = input.shippingMinor || 0;
-    const taxMinor = input.taxMinor || 0;
+    // PRICE TAMPERING PROTECTION: Ignore client discount/tax totals
+    const discountMinor = 0; 
+    const shippingMinor = input.shippingMinor || 0; 
+    
+    // Resolve authoritative tax
+    const taxRes = await TaxService.calculateTax({
+      tenantId,
+      storeId,
+      subtotalMinor: calculatedSubtotalMinor,
+      discountMinor,
+      shippingMinor
+    });
 
+    const taxMinor = taxRes.taxMinor;
     const totalMinor = Math.max(0, calculatedSubtotalMinor - discountMinor + shippingMinor + taxMinor);
 
     // Initial Payment & Fulfillment Statuses
@@ -153,7 +179,7 @@ export class OrderService {
           {
             productId: resItem.productId,
             variantId: resItem.variantId,
-            locationId: input.locationId,
+            warehouseId: (input as any).locationId,
             quantity: resItem.quantity,
             referenceType: 'ORDER',
             referenceId: normalizedOrderNumber,
@@ -189,7 +215,7 @@ export class OrderService {
       customerSnapshot: input.customerSnapshot,
       billingAddressSnapshot: input.billingAddressSnapshot,
       shippingAddressSnapshot: input.shippingAddressSnapshot,
-      currency: input.currency || 'USD',
+      currency: orderCurrency,
       subtotalMinor: calculatedSubtotalMinor,
       discountMinor,
       shippingMinor,
@@ -208,7 +234,8 @@ export class OrderService {
     const itemsToCreate = resolvedItems.map(i => ({
       ...i,
       orderId: order._id.toString(),
-      tenantId
+      tenantId,
+      storeId
     }));
     const createdItems = await OrderItemModel.insertMany(itemsToCreate);
 

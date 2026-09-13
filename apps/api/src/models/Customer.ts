@@ -3,7 +3,7 @@ import { CustomerStatus, CustomerLifecycleStage, CustomerSource } from '@sellzy/
 
 export interface ICustomerDocument extends Document {
   tenantId: string;
-  storeId?: string;
+  storeId: string;
   customerNumber: string;
   firstName: string;
   lastName: string;
@@ -40,7 +40,7 @@ export interface ICustomerDocument extends Document {
 const CustomerSchema = new Schema<ICustomerDocument>(
   {
     tenantId: { type: String, required: true, index: true },
-    storeId: { type: String, index: true },
+    storeId: { type: String, required: true, index: true },
     customerNumber: { type: String, required: true },
     firstName: { type: String, required: true, trim: true },
     lastName: { type: String, required: true, trim: true },

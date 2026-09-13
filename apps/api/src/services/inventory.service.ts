@@ -3,7 +3,7 @@ import { InventoryMovementModel, IInventoryMovementDocument } from '../models/In
 import { InventoryReservationModel, IInventoryReservationDocument } from '../models/InventoryReservation';
 import { ProductModel } from '../models/Product';
 import { ProductVariantModel } from '../models/ProductVariant';
-import { LocationModel } from '../models/Location';
+import { WarehouseModel } from '../models/Warehouse';
 import { AppError } from '../middleware/error';
 import { SecurityService } from './security.service';
 import { SystemEvents, InventoryMovementType, ReservationStatus, StockStatus } from '@sellzy/shared';
@@ -11,7 +11,7 @@ import { SystemEvents, InventoryMovementType, ReservationStatus, StockStatus } f
 export interface IAdjustStockInput {
   productId: string;
   variantId?: string | null;
-  locationId: string;
+  warehouseId: string;
   quantityDelta: number;
   type?: InventoryMovementType | string;
   movementType?: InventoryMovementType | string;
@@ -24,8 +24,8 @@ export interface IAdjustStockInput {
 export interface ITransferStockInput {
   productId: string;
   variantId?: string | null;
-  fromLocationId: string;
-  toLocationId: string;
+  fromWarehouseId: string;
+  toWarehouseId: string;
   quantity: number;
   reason?: string;
   idempotencyKey?: string;
@@ -34,7 +34,7 @@ export interface ITransferStockInput {
 export interface IReserveStockInput {
   productId: string;
   variantId?: string | null;
-  locationId: string;
+  warehouseId: string;
   quantity: number;
   referenceType?: string;
   referenceId?: string;
@@ -53,7 +53,7 @@ export class InventoryService {
   }
 
   static async adjustStock(tenantId: string, input: IAdjustStockInput, actorUserId?: string): Promise<{ inventory: IInventoryDocument; movement: IInventoryMovementDocument }> {
-    const { productId, locationId, quantityDelta, idempotencyKey } = input;
+    const { productId, warehouseId, quantityDelta, idempotencyKey } = input;
     const variantId = input.variantId || undefined;
     const movementType = (input.type || input.movementType || (quantityDelta >= 0 ? InventoryMovementType.STOCK_RECEIVED : InventoryMovementType.STOCK_ADJUSTED)) as InventoryMovementType;
 
@@ -64,7 +64,7 @@ export class InventoryService {
     if (idempotencyKey) {
       const existingMovement = await InventoryMovementModel.findOne({ tenantId, idempotencyKey });
       if (existingMovement) {
-        const inv = await InventoryModel.findOne({ tenantId, productId, variantId: variantId || null, locationId });
+        const inv = await InventoryModel.findOne({ tenantId, productId, variantId: variantId || null, warehouseId });
         if (inv) {
           return { inventory: inv, movement: existingMovement };
         }
@@ -73,14 +73,14 @@ export class InventoryService {
 
     const [product, location] = await Promise.all([
       ProductModel.findOne({ _id: productId, tenantId, isArchived: false }),
-      LocationModel.findOne({ _id: locationId, tenantId, isArchived: false, isActive: true })
+      WarehouseModel.findOne({ _id: warehouseId, tenantId, isArchived: false, isActive: true })
     ]);
 
     if (!product) {
       throw new AppError('Product not found in this tenant', 404, 'PRODUCT_NOT_FOUND');
     }
     if (!location) {
-      throw new AppError('Location not found or inactive in this tenant', 404, 'LOCATION_NOT_FOUND');
+      throw new AppError('Warehouse not found or inactive in this tenant', 404, 'WAREHOUSE_NOT_FOUND');
     }
 
     if (variantId) {
@@ -90,7 +90,7 @@ export class InventoryService {
       }
     }
 
-    let inventory = await InventoryModel.findOne({ tenantId, productId, variantId: variantId || null, locationId });
+    let inventory = await InventoryModel.findOne({ tenantId, productId, variantId: variantId || null, warehouseId });
 
     if (!inventory) {
       if (quantityDelta < 0) {
@@ -100,7 +100,7 @@ export class InventoryService {
         tenantId,
         productId,
         variantId: variantId || null,
-        locationId,
+        warehouseId,
         quantityOnHand: 0,
         quantityReserved: 0,
         quantityAvailable: 0,
@@ -120,7 +120,7 @@ export class InventoryService {
       tenantId,
       productId,
       variantId: variantId || null,
-      locationId
+      warehouseId
     };
 
     if (quantityDelta < 0) {
@@ -131,7 +131,7 @@ export class InventoryService {
       filter,
       {
         $inc: { quantityOnHand: quantityDelta, quantityAvailable: quantityDelta },
-        $setOnInsert: { tenantId, productId, variantId: variantId || null, locationId, quantityReserved: 0, reorderPoint: product.lowStockThreshold, reorderQuantity: 50 }
+        $setOnInsert: { tenantId, productId, variantId: variantId || null, warehouseId, quantityReserved: 0, reorderPoint: product.lowStockThreshold, reorderQuantity: 50 }
       },
       { new: true, upsert: quantityDelta > 0 }
     );
@@ -144,7 +144,7 @@ export class InventoryService {
       tenantId,
       productId,
       variantId: variantId || null,
-      locationId,
+      warehouseId,
       movementType,
       quantityDelta,
       quantityBefore,
@@ -164,7 +164,7 @@ export class InventoryService {
         action: SystemEvents.OUT_OF_STOCK_DETECTED,
         resourceType: 'INVENTORY',
         resourceId: updatedInv._id.toString(),
-        metadata: { productId, variantId, locationId, quantityAvailable: updatedInv.quantityAvailable }
+        metadata: { productId, variantId, warehouseId, quantityAvailable: updatedInv.quantityAvailable }
       });
     } else if (updatedInv.quantityAvailable <= lowStockThreshold) {
       await SecurityService.logSecurityEvent({
@@ -173,7 +173,7 @@ export class InventoryService {
         action: SystemEvents.LOW_STOCK_DETECTED,
         resourceType: 'INVENTORY',
         resourceId: updatedInv._id.toString(),
-        metadata: { productId, variantId, locationId, quantityAvailable: updatedInv.quantityAvailable, threshold: lowStockThreshold }
+        metadata: { productId, variantId, warehouseId, quantityAvailable: updatedInv.quantityAvailable, threshold: lowStockThreshold }
       });
     }
 
@@ -184,7 +184,7 @@ export class InventoryService {
         action: SystemEvents.STOCK_ADJUSTED,
         resourceType: 'INVENTORY',
         resourceId: updatedInv._id.toString(),
-        metadata: { productId, variantId, locationId, delta: quantityDelta, newTotal: updatedInv.quantityOnHand }
+        metadata: { productId, variantId, warehouseId, delta: quantityDelta, newTotal: updatedInv.quantityOnHand }
       });
     }
 
@@ -192,22 +192,22 @@ export class InventoryService {
   }
 
   static async transferStock(tenantId: string, input: ITransferStockInput, actorUserId?: string): Promise<{ fromInventory: IInventoryDocument; toInventory: IInventoryDocument }> {
-    const { productId, fromLocationId, toLocationId, quantity, idempotencyKey } = input;
+    const { productId, fromWarehouseId, toWarehouseId, quantity, idempotencyKey } = input;
     const variantId = input.variantId || undefined;
 
     if (quantity <= 0) {
       throw new AppError('Transfer quantity must be greater than zero', 400, 'INVALID_QUANTITY');
     }
 
-    if (fromLocationId === toLocationId) {
-      throw new AppError('Source and destination locations must be different', 400, 'INVALID_TRANSFER_LOCATIONS');
+    if (fromWarehouseId === toWarehouseId) {
+      throw new AppError('Source and destination warehouses must be different', 400, 'INVALID_TRANSFER_WAREHOUSES');
     }
 
     if (idempotencyKey) {
       const existingMovement = await InventoryMovementModel.findOne({ tenantId, idempotencyKey });
       if (existingMovement) {
-        const fromInv = await InventoryModel.findOne({ tenantId, productId, variantId: variantId || null, locationId: fromLocationId });
-        const toInv = await InventoryModel.findOne({ tenantId, productId, variantId: variantId || null, locationId: toLocationId });
+        const fromInv = await InventoryModel.findOne({ tenantId, productId, variantId: variantId || null, warehouseId: fromWarehouseId });
+        const toInv = await InventoryModel.findOne({ tenantId, productId, variantId: variantId || null, warehouseId: toWarehouseId });
         if (fromInv && toInv) {
           return { fromInventory: fromInv, toInventory: toInv };
         }
@@ -215,17 +215,17 @@ export class InventoryService {
     }
 
     const [fromLoc, toLoc] = await Promise.all([
-      LocationModel.findOne({ _id: fromLocationId, tenantId, isArchived: false, isActive: true }),
-      LocationModel.findOne({ _id: toLocationId, tenantId, isArchived: false, isActive: true })
+      WarehouseModel.findOne({ _id: fromWarehouseId, tenantId, isArchived: false, isActive: true }),
+      WarehouseModel.findOne({ _id: toWarehouseId, tenantId, isArchived: false, isActive: true })
     ]);
 
-    if (!fromLoc) throw new AppError('Source location not found or inactive', 404, 'SOURCE_LOCATION_NOT_FOUND');
-    if (!toLoc) throw new AppError('Destination location not found or inactive', 404, 'DESTINATION_LOCATION_NOT_FOUND');
+    if (!fromLoc) throw new AppError('Source warehouse not found or inactive', 404, 'SOURCE_WAREHOUSE_NOT_FOUND');
+    if (!toLoc) throw new AppError('Destination warehouse not found or inactive', 404, 'DESTINATION_WAREHOUSE_NOT_FOUND');
 
     const sourceResult = await this.adjustStock(tenantId, {
       productId,
       variantId,
-      locationId: fromLocationId,
+      warehouseId: fromWarehouseId,
       quantityDelta: -quantity,
       movementType: InventoryMovementType.STOCK_TRANSFERRED_OUT,
       referenceType: 'TRANSFER',
@@ -236,7 +236,7 @@ export class InventoryService {
     const destResult = await this.adjustStock(tenantId, {
       productId,
       variantId,
-      locationId: toLocationId,
+      warehouseId: toWarehouseId,
       quantityDelta: quantity,
       movementType: InventoryMovementType.STOCK_TRANSFERRED_IN,
       referenceType: 'TRANSFER',
@@ -251,7 +251,7 @@ export class InventoryService {
         action: SystemEvents.STOCK_TRANSFERRED,
         resourceType: 'INVENTORY',
         resourceId: productId,
-        metadata: { fromLocationId, toLocationId, quantity, productId, variantId }
+        metadata: { fromWarehouseId, toWarehouseId, quantity, productId, variantId }
       });
     }
 
@@ -259,7 +259,7 @@ export class InventoryService {
   }
 
   static async reserveStock(tenantId: string, input: IReserveStockInput, actorUserId?: string): Promise<{ reservation: IInventoryReservationDocument; inventory: IInventoryDocument }> {
-    const { productId, locationId, quantity, idempotencyKey } = input;
+    const { productId, warehouseId, quantity, idempotencyKey } = input;
     const variantId = input.variantId || undefined;
 
     if (quantity <= 0) {
@@ -269,7 +269,7 @@ export class InventoryService {
     if (idempotencyKey) {
       const existingRes = await InventoryReservationModel.findOne({ tenantId, idempotencyKey });
       if (existingRes) {
-        const inv = await InventoryModel.findOne({ tenantId, productId, variantId: variantId || null, locationId });
+        const inv = await InventoryModel.findOne({ tenantId, productId, variantId: variantId || null, warehouseId });
         if (inv) return { reservation: existingRes, inventory: inv };
       }
     }
@@ -279,7 +279,7 @@ export class InventoryService {
         tenantId,
         productId,
         variantId: variantId || null,
-        locationId,
+        warehouseId,
         quantityAvailable: { $gte: quantity }
       },
       {
@@ -299,7 +299,7 @@ export class InventoryService {
       tenantId,
       productId,
       variantId: variantId || null,
-      locationId,
+      warehouseId,
       quantity,
       status: ReservationStatus.ACTIVE,
       referenceType: input.referenceType || 'CART',
@@ -313,7 +313,7 @@ export class InventoryService {
       tenantId,
       productId,
       variantId: variantId || null,
-      locationId,
+      warehouseId,
       movementType: InventoryMovementType.STOCK_RESERVED,
       quantityDelta: 0,
       quantityBefore: updatedInv.quantityOnHand,
@@ -350,7 +350,7 @@ export class InventoryService {
         tenantId,
         productId: reservation.productId,
         variantId: reservation.variantId || null,
-        locationId: reservation.locationId,
+        warehouseId: reservation.warehouseId,
         quantityReserved: { $gte: reservation.quantity }
       },
       {
@@ -370,7 +370,7 @@ export class InventoryService {
       tenantId,
       productId: reservation.productId,
       variantId: reservation.variantId || null,
-      locationId: reservation.locationId,
+      warehouseId: reservation.warehouseId,
       movementType: InventoryMovementType.STOCK_RELEASED,
       quantityDelta: 0,
       quantityBefore: updatedInv.quantityOnHand,
@@ -406,7 +406,7 @@ export class InventoryService {
         tenantId,
         productId: reservation.productId,
         variantId: reservation.variantId || null,
-        locationId: reservation.locationId,
+        warehouseId: reservation.warehouseId,
         quantityReserved: { $gte: reservation.quantity },
         quantityOnHand: { $gte: reservation.quantity }
       },
@@ -427,7 +427,7 @@ export class InventoryService {
       tenantId,
       productId: reservation.productId,
       variantId: reservation.variantId || null,
-      locationId: reservation.locationId,
+      warehouseId: reservation.warehouseId,
       movementType: InventoryMovementType.STOCK_SOLD,
       quantityDelta: -reservation.quantity,
       quantityBefore: updatedInv.quantityOnHand + reservation.quantity,
@@ -441,19 +441,19 @@ export class InventoryService {
     return { reservation, inventory: updatedInv };
   }
 
-  static async getInventoryByLocation(tenantId: string, locationId: string) {
-    const items = await InventoryModel.find({ tenantId, locationId });
+  static async getInventoryByLocation(tenantId: string, warehouseId: string) {
+    const items = await InventoryModel.find({ tenantId, warehouseId });
     return items;
   }
 
-  static async getInventoryMovements(tenantId: string, filters: { productId?: string; locationId?: string; page?: number; limit?: number }) {
+  static async getInventoryMovements(tenantId: string, filters: { productId?: string; warehouseId?: string; page?: number; limit?: number }) {
     const page = Math.max(1, filters.page || 1);
     const limit = Math.min(100, Math.max(1, filters.limit || 20));
     const skip = (page - 1) * limit;
 
     const query: Record<string, unknown> = { tenantId };
     if (filters.productId) query.productId = filters.productId;
-    if (filters.locationId) query.locationId = filters.locationId;
+    if (filters.warehouseId) query.warehouseId = filters.warehouseId;
 
     const [items, total] = await Promise.all([
       InventoryMovementModel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),

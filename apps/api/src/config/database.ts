@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
 import { env } from '@sellzy/config';
 import { logger } from '../utils/logger';
+import { tenantStoreScopePlugin } from '../models/plugins/tenantStoreScope';
+
+mongoose.plugin(tenantStoreScopePlugin);
 
 export async function connectDB(): Promise<void> {
   try {

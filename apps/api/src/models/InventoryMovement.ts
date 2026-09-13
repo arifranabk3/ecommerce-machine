@@ -3,9 +3,10 @@ import { InventoryMovementType } from '@sellzy/shared';
 
 export interface IInventoryMovementDocument extends Document {
   tenantId: string;
+  storeId: string;
   productId: string;
   variantId?: string;
-  locationId: string;
+  warehouseId: string;
   movementType: InventoryMovementType;
   quantityDelta: number;
   quantityBefore: number;
@@ -20,9 +21,10 @@ export interface IInventoryMovementDocument extends Document {
 
 const inventoryMovementSchema = new Schema<IInventoryMovementDocument>({
   tenantId: { type: String, required: true, index: true },
+  storeId: { type: String, required: true, index: true },
   productId: { type: String, required: true, index: true },
   variantId: { type: String, index: true, default: null },
-  locationId: { type: String, required: true, index: true },
+  warehouseId: { type: String, required: true, index: true },
   movementType: { 
     type: String, 
     enum: Object.values(InventoryMovementType), 
@@ -40,7 +42,7 @@ const inventoryMovementSchema = new Schema<IInventoryMovementDocument>({
   timestamps: { createdAt: true, updatedAt: false }
 });
 
-inventoryMovementSchema.index({ tenantId: 1, idempotencyKey: 1 }, { sparse: true });
-inventoryMovementSchema.index({ tenantId: 1, productId: 1, locationId: 1, createdAt: -1 });
+inventoryMovementSchema.index({ tenantId: 1, storeId: 1, idempotencyKey: 1 }, { sparse: true });
+inventoryMovementSchema.index({ tenantId: 1, storeId: 1, productId: 1, warehouseId: 1, createdAt: -1 });
 
 export const InventoryMovementModel = mongoose.model<IInventoryMovementDocument>('InventoryMovement', inventoryMovementSchema);

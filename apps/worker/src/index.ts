@@ -3,7 +3,17 @@ import Redis from 'ioredis';
 import { env } from '@sellzy/config';
 import pino from 'pino';
 
-const logger = pino({ name: 'sellzy-worker' });
+const logger = pino({ 
+  name: 'sellzy-worker',
+  redact: {
+    paths: [
+      'password', 'passwordHash', 'token', 'accessToken', 'refreshToken',
+      'jwt', 'apiKey', 'secret', 'req.headers.authorization',
+      'webhookSecret', 'paymentSecret', 'mfaSecret', 'providerCredentials', 'clientSecret'
+    ],
+    censor: '***REDACTED***'
+  }
+});
 const connection = new Redis(env.REDIS_URI, { maxRetriesPerRequest: null });
 
 export function startWorker() {
@@ -37,6 +47,16 @@ export function startWorker() {
 
   worker.on('failed', (job: Job | undefined, err: Error) => {
     logger.error({ jobId: job?.id, err }, 'Job failed');
+    
+    if (job && job.attemptsMade >= (job.opts.attempts || 1)) {
+      // Dead Letter Queue handler
+      logger.fatal({ 
+        jobId: job.id, 
+        jobName: job.name, 
+        tenantId: job.data?.tenantId, 
+        err 
+      }, '[DLQ] Job exhausted all retries and has moved to Dead Letter Queue');
+    }
   });
 
   logger.info('BullMQ Background Worker started listening on system-events queue');

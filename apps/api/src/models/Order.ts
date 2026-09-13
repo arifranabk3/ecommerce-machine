@@ -1,7 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IOrder, OrderStatus, PaymentStatus, FulfillmentStatus, OrderSource, PaymentMethod } from '@sellzy/shared';
 
-export interface IOrderDocument extends Omit<IOrder, 'id'>, Document {}
+export interface IOrderDocument extends Omit<IOrder, 'id'>, Document {
+  storeId: string;
+}
 
 const CustomerSnapshotSchema = new Schema(
   {
@@ -26,7 +28,7 @@ const AddressSnapshotSchema = new Schema(
 const OrderSchema: Schema = new Schema(
   {
     tenantId: { type: String, required: true, index: true },
-    storeId: { type: String, index: true },
+    storeId: { type: String, required: true, index: true },
     orderNumber: { type: String, required: true, trim: true },
     normalizedOrderNumber: { type: String, required: true, trim: true },
     status: {

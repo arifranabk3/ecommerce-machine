@@ -1,10 +1,10 @@
-import { LocationModel, ILocationDocument } from '../models/Location';
+import { WarehouseModel, IWarehouseDocument } from '../models/Warehouse';
 import { InventoryModel } from '../models/Inventory';
 import { AppError } from '../middleware/error';
 import { SecurityService } from './security.service';
 import { SystemEvents, LocationType } from '@sellzy/shared';
 
-export interface ICreateLocationInput {
+export interface ICreateWarehouseInput {
   name: string;
   code: string;
   type?: LocationType | 'WAREHOUSE' | 'STORE' | 'FULFILLMENT_CENTER' | 'OTHER';
@@ -20,7 +20,7 @@ export interface ICreateLocationInput {
   isDefault?: boolean;
 }
 
-export interface IUpdateLocationInput {
+export interface IUpdateWarehouseInput {
   name?: string;
   code?: string;
   type?: LocationType | 'WAREHOUSE' | 'STORE' | 'FULFILLMENT_CENTER' | 'OTHER';
@@ -37,24 +37,24 @@ export interface IUpdateLocationInput {
   isActive?: boolean;
 }
 
-export class LocationService {
-  static async createLocation(tenantId: string, input: ICreateLocationInput, actorUserId?: string): Promise<ILocationDocument> {
+export class WarehouseService {
+  static async createLocation(tenantId: string, input: ICreateWarehouseInput, actorUserId?: string): Promise<IWarehouseDocument> {
     const code = input.code.trim().toUpperCase();
     const normalizedCode = code;
 
-    const existingCode = await LocationModel.findOne({ tenantId, normalizedCode, isArchived: false });
+    const existingCode = await WarehouseModel.findOne({ tenantId, normalizedCode, isArchived: false });
     if (existingCode) {
       throw new AppError('Location with this code already exists', 400, 'LOCATION_CODE_EXISTS');
     }
 
-    const count = await LocationModel.countDocuments({ tenantId, isArchived: false });
+    const count = await WarehouseModel.countDocuments({ tenantId, isArchived: false });
     let isDefault = input.isDefault ?? false;
     if (count === 0) {
       isDefault = true;
     }
 
     if (isDefault) {
-      await LocationModel.updateMany({ tenantId }, { $set: { isDefault: false } });
+      await WarehouseModel.updateMany({ tenantId }, { $set: { isDefault: false } });
     }
 
     const formattedAddress = input.address ? {
@@ -66,7 +66,7 @@ export class LocationService {
       country: input.address.country
     } : undefined;
 
-    const location = await LocationModel.create({
+    const location = await WarehouseModel.create({
       tenantId,
       name: input.name.trim(),
       code,
@@ -92,15 +92,15 @@ export class LocationService {
     return location;
   }
 
-  static async updateLocation(tenantId: string, locationId: string, input: IUpdateLocationInput, actorUserId?: string): Promise<ILocationDocument> {
-    const location = await LocationModel.findOne({ _id: locationId, tenantId, isArchived: false });
+  static async updateLocation(tenantId: string, locationId: string, input: IUpdateWarehouseInput, actorUserId?: string): Promise<IWarehouseDocument> {
+    const location = await WarehouseModel.findOne({ _id: locationId, tenantId, isArchived: false });
     if (!location) {
       throw new AppError('Location not found', 404, 'LOCATION_NOT_FOUND');
     }
 
     if (input.code !== undefined) {
       const code = input.code.trim().toUpperCase();
-      const existingCode = await LocationModel.findOne({ tenantId, normalizedCode: code, _id: { $ne: location._id }, isArchived: false });
+      const existingCode = await WarehouseModel.findOne({ tenantId, normalizedCode: code, _id: { $ne: location._id }, isArchived: false });
       if (existingCode) {
         throw new AppError('Location code already in use', 400, 'LOCATION_CODE_EXISTS');
       }
@@ -133,7 +133,7 @@ export class LocationService {
 
     if (input.isDefault !== undefined && input.isDefault !== location.isDefault) {
       if (input.isDefault) {
-        await LocationModel.updateMany({ tenantId }, { $set: { isDefault: false } });
+        await WarehouseModel.updateMany({ tenantId }, { $set: { isDefault: false } });
         location.isDefault = true;
       } else {
         throw new AppError('Cannot unset default location directly. Mark another location as default instead.', 400, 'DEFAULT_LOCATION_REQUIRED');
@@ -156,8 +156,8 @@ export class LocationService {
     return location;
   }
 
-  static async archiveLocation(tenantId: string, locationId: string, actorUserId?: string): Promise<ILocationDocument> {
-    const location = await LocationModel.findOne({ _id: locationId, tenantId, isArchived: false });
+  static async archiveLocation(tenantId: string, locationId: string, actorUserId?: string): Promise<IWarehouseDocument> {
+    const location = await WarehouseModel.findOne({ _id: locationId, tenantId, isArchived: false });
     if (!location) {
       throw new AppError('Location not found', 404, 'LOCATION_NOT_FOUND');
     }
@@ -166,7 +166,7 @@ export class LocationService {
       throw new AppError('Cannot archive default location', 400, 'CANNOT_ARCHIVE_DEFAULT');
     }
 
-    const existingStock = await InventoryModel.findOne({ tenantId, locationId, quantityOnHand: { $gt: 0 } });
+    const existingStock = await InventoryModel.findOne({ tenantId, warehouseId: locationId, quantityOnHand: { $gt: 0 } });
     if (existingStock) {
       throw new AppError('Cannot archive location with active inventory. Transfer or adjust stock to 0 first.', 400, 'LOCATION_HAS_STOCK');
     }
@@ -190,16 +190,16 @@ export class LocationService {
     return location;
   }
 
-  static async getLocations(tenantId: string, includeArchived = false): Promise<ILocationDocument[]> {
+  static async getLocations(tenantId: string, includeArchived = false): Promise<IWarehouseDocument[]> {
     const query: Record<string, unknown> = { tenantId };
     if (!includeArchived) {
       query.isArchived = false;
     }
-    return LocationModel.find(query).sort({ isDefault: -1, name: 1 });
+    return WarehouseModel.find(query).sort({ isDefault: -1, name: 1 });
   }
 
-  static async getLocationById(tenantId: string, locationId: string): Promise<ILocationDocument> {
-    const location = await LocationModel.findOne({ _id: locationId, tenantId });
+  static async getLocationById(tenantId: string, locationId: string): Promise<IWarehouseDocument> {
+    const location = await WarehouseModel.findOne({ _id: locationId, tenantId });
     if (!location) {
       throw new AppError('Location not found', 404, 'LOCATION_NOT_FOUND');
     }

@@ -2,6 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ICategoryDocument extends Document {
   tenantId: string;
+  storeId: string;
   name: string;
   normalizedName: string;
   slug: string;
@@ -18,6 +19,7 @@ export interface ICategoryDocument extends Document {
 
 const categorySchema = new Schema<ICategoryDocument>({
   tenantId: { type: String, required: true, index: true },
+  storeId: { type: String, required: true, index: true },
   name: { type: String, required: true },
   normalizedName: { type: String, required: true },
   slug: { type: String, required: true },
@@ -32,8 +34,8 @@ const categorySchema = new Schema<ICategoryDocument>({
   timestamps: true
 });
 
-categorySchema.index({ tenantId: 1, normalizedName: 1 }, { unique: true });
-categorySchema.index({ tenantId: 1, slug: 1 }, { unique: true });
-categorySchema.index({ tenantId: 1, isArchived: 1, parentId: 1 });
+categorySchema.index({ tenantId: 1, storeId: 1, normalizedName: 1 }, { unique: true });
+categorySchema.index({ tenantId: 1, storeId: 1, slug: 1 }, { unique: true });
+categorySchema.index({ tenantId: 1, storeId: 1, isArchived: 1, parentId: 1 });
 
 export const CategoryModel = mongoose.model<ICategoryDocument>('Category', categorySchema);
