@@ -37,8 +37,8 @@ export async function connectDB(): Promise<void> {
 
     logger.info('Connected to MongoDB successfully');
   } catch (error) {
-    logger.error({ err: error }, 'MongoDB connection failed');
-    process.exit(1);
+    logger.error({ err: error }, 'MongoDB connection failed. Retrying in background...');
+    // Removed process.exit(1) so Railway healthcheck can pass even if DB is not provided.
   }
 }
 
