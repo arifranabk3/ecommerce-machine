@@ -85,7 +85,7 @@ export default function OnboardingPage() {
                       <Building2 className="w-8 h-8" />
                     </div>
                     <h2 className="text-2xl font-bold text-slate-900">Welcome to Sellzy</h2>
-                    <p className="text-slate-500 font-medium mt-2">Let's start by setting up your organization profile.</p>
+                    <p className="text-slate-500 font-medium mt-2">Let&apos;s start by setting up your organization profile.</p>
                   </div>
                   
                   <div className="space-y-4">

@@ -60,11 +60,11 @@ export default function DashboardPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <h1 className="text-3xl font-extrabold text-content-primary tracking-tight">Good morning, Arif</h1>
-            <p className="text-content-secondary text-base mt-1.5 font-medium">Here's what's happening with your store today.</p>
+            <p className="text-content-secondary text-base mt-1.5 font-medium">Here&apos;s what&apos;s happening with your store today.</p>
           </div>
           <div className="flex flex-col md:flex-row gap-4 md:items-center">
             <div className="hidden md:block text-right mr-4">
-              <p className="text-[13px] font-bold text-content-primary italic">"Build. Sell. Grow."</p>
+              <p className="text-[13px] font-bold text-content-primary italic">&quot;Build. Sell. Grow.&quot;</p>
               <p className="text-[11px] text-content-secondary">— Sellzy</p>
             </div>
             <button className="flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-lg text-sm font-bold text-content-primary shadow-sm hover:bg-surface-hover transition-colors">
@@ -404,7 +404,7 @@ export default function DashboardPage() {
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
           <div className="relative z-10">
             <h2 className="text-xl md:text-2xl font-extrabold text-white mb-2">Your store is performing great!</h2>
-            <p className="text-brand-100 font-medium text-sm md:text-base">You're up <span className="font-bold text-white bg-white/20 px-2 py-0.5 rounded-md">18.4%</span> compared to last month. Keep it up!</p>
+            <p className="text-brand-100 font-medium text-sm md:text-base">You&apos;re up <span className="font-bold text-white bg-white/20 px-2 py-0.5 rounded-md">18.4%</span> compared to last month. Keep it up!</p>
           </div>
           <button className="relative z-10 flex items-center justify-center gap-2 px-6 py-3 bg-white text-brand-600 rounded-xl text-sm font-bold shadow-lg hover:bg-surface-hover transition-all active:scale-95 whitespace-nowrap">
             <Zap className="w-4 h-4 text-brand-600" fill="currentColor" />

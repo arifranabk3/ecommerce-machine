@@ -20,6 +20,7 @@ export default function BusinessSettingsPage() {
 
   useEffect(() => {
     if (token) fetchTenant();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
