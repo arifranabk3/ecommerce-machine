@@ -7,11 +7,11 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-slate-50 relative">
+    <div className="flex h-screen bg-background relative overflow-hidden">
       <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <TopNav onMenuClick={() => setIsMobileMenuOpen(true)} />
-        <main className="p-4 md:p-8 flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
           {children}
         </main>
       </div>

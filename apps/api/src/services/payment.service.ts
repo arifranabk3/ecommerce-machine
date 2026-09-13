@@ -64,6 +64,7 @@ export class PaymentService {
 
     const payment = new PaymentModel({
       tenantId,
+      storeId: order.storeId,
       paymentNumber,
       orderId,
       customerId: customerId || order.customerId,

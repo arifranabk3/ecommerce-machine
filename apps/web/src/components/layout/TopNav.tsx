@@ -1,65 +1,61 @@
+'use client';
 import React from 'react';
-import { Bell, Search, Menu, Moon, ChevronDown } from 'lucide-react';
+import { Bell, Search, Menu, Command, Store, ChevronDown } from 'lucide-react';
 
 export const TopNav: React.FC<{ onMenuClick?: () => void }> = ({ onMenuClick }) => {
   return (
-    <header className="h-[72px] bg-[#fbfdfc] px-4 md:px-8 flex items-center justify-between border-b border-slate-100 shrink-0">
-      <div className="flex items-center gap-2 md:gap-4 flex-1">
+    <header className="h-16 bg-surface px-4 md:px-8 flex items-center justify-between border-b border-border shrink-0 sticky top-0 z-30">
+      <div className="flex items-center gap-4 flex-1">
         <button 
           onClick={onMenuClick}
-          className="p-2 -ml-2 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-lg md:hidden"
+          className="p-2 -ml-2 text-content-secondary hover:text-content-primary hover:bg-surface-hover rounded-lg md:hidden transition-colors"
         >
           <Menu className="w-5 h-5" />
         </button>
-        <div className="relative w-full max-w-xl hidden md:block">
-          <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search orders, customers, products, vendors..."
-            className="w-full pl-10 pr-16 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-300 transition shadow-sm"
-          />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            <span className="text-[11px] font-medium text-slate-400 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded">Ctrl K</span>
-          </div>
+        
+        {/* Global Search / Command Palette Trigger */}
+        <div className="relative w-full max-w-md hidden md:block">
+          <button className="w-full flex items-center justify-between px-3 py-2 bg-background border border-border rounded-lg text-sm text-content-muted hover:bg-surface-secondary hover:border-content-muted transition-all shadow-sm group">
+            <span className="flex items-center gap-2 group-hover:text-content-secondary transition-colors">
+              <Search className="w-4 h-4 text-content-muted group-hover:text-brand-600 transition-colors" />
+              Search anywhere...
+            </span>
+            <div className="flex items-center gap-1">
+              <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-border bg-surface px-1.5 font-mono text-[10px] font-medium text-content-secondary shadow-sm">
+                <Command className="w-3 h-3" />
+                <span>K</span>
+              </kbd>
+            </div>
+          </button>
         </div>
       </div>
 
-      <div className="flex items-center gap-5">
-        {/* Currency Dropdown */}
-        <div className="hidden md:flex items-center gap-2 cursor-pointer px-2 py-1.5 hover:bg-slate-50 rounded-lg transition-colors">
-          <div className="w-5 h-5 bg-brand-600 rounded-full flex items-center justify-center">
-            <span className="text-white text-[10px] font-bold">☾</span>
+      <div className="flex items-center gap-4 md:gap-6">
+        {/* Store Context Switcher */}
+        <div className="hidden lg:flex items-center gap-3 cursor-pointer px-3 py-1.5 hover:bg-surface-hover rounded-xl transition-all group">
+          <div className="w-8 h-8 bg-surface rounded-lg flex items-center justify-center border border-border shadow-sm group-hover:border-brand-200 transition-colors">
+            <Store className="w-4 h-4 text-content-secondary group-hover:text-brand-600 transition-colors" />
           </div>
-          <span className="text-sm font-semibold text-slate-700">PKR</span>
-          <ChevronDown className="w-4 h-4 text-slate-400" />
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold text-content-muted leading-tight uppercase tracking-wider">Acme Fashion</span>
+            <span className="text-[13px] font-bold text-content-primary leading-tight">Pakistan • PKR</span>
+          </div>
+          <ChevronDown className="w-4 h-4 text-content-muted group-hover:text-content-secondary ml-1" />
         </div>
 
-        <div className="h-6 w-px bg-slate-200 hidden md:block" />
+        <div className="h-6 w-px bg-border hidden lg:block" />
 
-        {/* Icons */}
-        <div className="flex items-center gap-3">
-          <button className="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-full transition-colors">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 rounded-full text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
-              3
-            </span>
-          </button>
-          
-          <button className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-50 rounded-full transition-colors">
-            <Moon className="w-5 h-5" />
-          </button>
-        </div>
+        {/* Notifications */}
+        <button className="relative p-2 text-content-secondary hover:text-content-primary hover:bg-surface-hover rounded-xl transition-colors">
+          <Bell className="w-5 h-5" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand-600 rounded-full border-2 border-surface"></span>
+        </button>
 
-        {/* User Avatar */}
-        <div className="flex items-center gap-3 pl-2 cursor-pointer group">
-          <div className="w-9 h-9 rounded-full bg-brand-300 flex items-center justify-center font-bold text-white shadow-sm ring-2 ring-transparent group-hover:ring-brand-200 transition-all">
-            A
+        {/* User Menu */}
+        <div className="flex items-center gap-2 cursor-pointer group ml-1">
+          <div className="w-8 h-8 rounded-full bg-surface-secondary flex items-center justify-center font-bold text-content-secondary text-[11px] shadow-sm ring-2 ring-transparent group-hover:ring-brand-100 transition-all border border-border">
+            AR
           </div>
-          <div className="hidden md:block">
-            <p className="text-sm font-bold text-slate-900 leading-tight">Arif Mahmood</p>
-            <p className="text-xs text-slate-500 font-medium">Owner</p>
-          </div>
-          <ChevronDown className="w-4 h-4 text-slate-400 hidden md:block" />
         </div>
       </div>
     </header>

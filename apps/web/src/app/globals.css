@@ -1,9 +1,36 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
+  :root {
+    --background: #F7F8FC;
+    --foreground: #111827;
+  }
+
   body {
-    @apply bg-gray-50 text-brand-900 font-sans antialiased;
+    @apply bg-background text-content-primary font-sans antialiased;
+    background-color: var(--background);
+  }
+
+  /* Custom scrollbar for a premium dark feel */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-800 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-700;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-surface-elevated/70 backdrop-blur-md border border-white/5 shadow-premium;
   }
 }

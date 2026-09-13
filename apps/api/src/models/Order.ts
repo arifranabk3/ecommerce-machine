@@ -1,7 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IOrder, OrderStatus, PaymentStatus, FulfillmentStatus, OrderSource, PaymentMethod } from '@sellzy/shared';
 
-export interface IOrderDocument extends Omit<IOrder, 'id'>, Document {}
+export interface IOrderDocument extends Omit<IOrder, 'id'>, Document {
+  storeId: string;
+}
 
 const CustomerSnapshotSchema = new Schema(
   {

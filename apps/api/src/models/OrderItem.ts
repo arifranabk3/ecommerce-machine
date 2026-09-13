@@ -1,12 +1,15 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IOrderItem } from '@sellzy/shared';
 
-export interface IOrderItemDocument extends Omit<IOrderItem, 'id'>, Document {}
+export interface IOrderItemDocument extends Omit<IOrderItem, 'id'>, Document {
+  storeId: string;
+}
 
 const OrderItemSchema: Schema = new Schema(
   {
     orderId: { type: String, required: true, index: true },
     tenantId: { type: String, required: true, index: true },
+    storeId: { type: String, required: true, index: true },
     productId: { type: String, required: true, index: true },
     variantId: { type: String, index: true },
     productNameSnapshot: { type: String, required: true },
@@ -26,8 +29,8 @@ const OrderItemSchema: Schema = new Schema(
   }
 );
 
-OrderItemSchema.index({ tenantId: 1, orderId: 1 });
-OrderItemSchema.index({ tenantId: 1, productId: 1 });
-OrderItemSchema.index({ tenantId: 1, variantId: 1 });
+OrderItemSchema.index({ tenantId: 1, storeId: 1, orderId: 1 });
+OrderItemSchema.index({ tenantId: 1, storeId: 1, productId: 1 });
+OrderItemSchema.index({ tenantId: 1, storeId: 1, variantId: 1 });
 
 export const OrderItemModel = mongoose.model<IOrderItemDocument>('OrderItem', OrderItemSchema);

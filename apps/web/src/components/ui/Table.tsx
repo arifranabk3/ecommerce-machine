@@ -1,42 +1,47 @@
 import React from 'react';
+import { cn } from '@/utils/cn';
 
-export const Table: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <div className="w-full overflow-x-auto rounded-lg border border-slate-200">
-    <table className={`w-full text-sm text-left text-slate-600 ${className}`}>
+export const Table: React.FC<{ children?: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
+  <div className="w-full overflow-x-auto">
+    <table className={cn("w-full text-sm text-left text-content-primary", className)}>
       {children}
     </table>
   </div>
 );
 
-export const Thead: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-200">
+export const Thead: React.FC<{ children?: React.ReactNode }> = ({ children }) => (
+  <thead className="text-[11px] text-content-secondary font-bold uppercase tracking-wider bg-surface-secondary/50 border-b border-border">
     {children}
   </thead>
 );
 
-export const Tbody: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <tbody className="divide-y divide-slate-100 bg-white">
+export const Tbody: React.FC<{ children?: React.ReactNode }> = ({ children }) => (
+  <tbody className="divide-y divide-border bg-transparent">
     {children}
   </tbody>
 );
 
-export const Tr: React.FC<{ children: React.ReactNode; className?: string; onClick?: () => void }> = ({ children, className = '', onClick }) => (
+export const Tr: React.FC<{ children?: React.ReactNode; className?: string; onClick?: () => void }> = ({ children, className = '', onClick }) => (
   <tr 
-    className={`hover:bg-slate-50 transition-colors ${onClick ? 'cursor-pointer' : ''} ${className}`}
+    className={cn(
+      "hover:bg-surface-secondary/50 transition-colors group",
+      onClick && "cursor-pointer",
+      className
+    )}
     onClick={onClick}
   >
     {children}
   </tr>
 );
 
-export const Th: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <th scope="col" className={`px-6 py-3 font-semibold ${className}`}>
+export const Th: React.FC<{ children?: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
+  <th scope="col" className={cn("px-4 py-3.5 font-bold text-content-secondary", className)}>
     {children}
   </th>
 );
 
-export const Td: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <td className={`px-6 py-4 whitespace-nowrap ${className}`}>
+export const Td: React.FC<{ children?: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
+  <td className={cn("px-4 py-4 whitespace-nowrap", className)}>
     {children}
   </td>
 );
