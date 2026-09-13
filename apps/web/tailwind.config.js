@@ -10,11 +10,11 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: '#F7F8FC',
+        background: '#F7F9FC',
         surface: {
           DEFAULT: '#FFFFFF',
           elevated: '#FFFFFF',
-          hover: '#F9FAFB',
+          hover: '#F8FAFC',
           secondary: '#F1F3F8',
         },
         border: {
@@ -22,7 +22,7 @@ module.exports = {
           subtle: '#F3F4F6',
         },
         content: {
-          primary: '#111827',
+          primary: '#111A3A',
           secondary: '#667085',
           muted: '#98A2B3',
         },
@@ -33,32 +33,28 @@ module.exports = {
           300: '#C4B5FD',
           400: '#A78BFA',
           500: '#8B5CF6',
-          600: '#6D4AFF', // Primary Violet
-          700: '#5B21B6',
+          600: '#633BFF', // Primary Violet (matches prompt)
+          700: '#6D45FF',
           800: '#4C1D95',
           900: '#2E1065',
         },
-        indigo: {
-          500: '#6366F1',
-          600: '#4F46E5', // Secondary Brand
-        },
         accent: {
-          DEFAULT: '#06B6D4', // Cyan
+          DEFAULT: '#20C7E8', // Cyan
           hover: '#0891B2',
-          subtle: 'rgba(6, 182, 212, 0.1)',
+          subtle: 'rgba(32, 199, 232, 0.1)',
         },
         success: {
-          DEFAULT: '#16A34A',
-          subtle: '#DCFCE7',
-          text: '#15803D'
+          DEFAULT: '#10B981', // green
+          subtle: '#D1FAE5',
+          text: '#047857'
         },
         warning: {
-          DEFAULT: '#D97706',
+          DEFAULT: '#F59E0B', // amber
           subtle: '#FEF3C7',
           text: '#B45309'
         },
         danger: {
-          DEFAULT: '#DC2626',
+          DEFAULT: '#EF4444', // red
           subtle: '#FEE2E2',
           text: '#B91C1C'
         },

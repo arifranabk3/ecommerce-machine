@@ -93,18 +93,14 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
       
       {/* Sidebar Content */}
       <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-[260px] bg-surface border-r border-border flex flex-col justify-between pt-5 pb-4 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
+        "fixed inset-y-0 left-0 z-50 w-[230px] bg-surface border-r border-border flex flex-col justify-between pt-5 pb-4 transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0",
         isOpen ? "translate-x-0" : "-translate-x-full hidden md:flex"
       )}>
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center gap-3 px-6 mb-8">
             <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center shadow-sm">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" fill="currentColor"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <span className="text-white font-extrabold text-lg italic">S</span>
             </div>
             <div>
               <h1 className="font-extrabold text-lg text-content-primary tracking-tight leading-none">Sellzy</h1>
@@ -114,25 +110,27 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
           {/* Navigation */}
           <div className="flex-1 overflow-y-auto no-scrollbar">
             <NavGroup items={mainNav} />
-            <NavGroup items={commerceNav} label="Commerce" />
-            <NavGroup items={growthNav} label="Growth" />
-            <NavGroup items={experienceNav} label="Experience" />
-            <NavGroup items={platformNav} label="Platform" />
+            <NavGroup items={commerceNav} label="COMMERCE" />
+            <NavGroup items={growthNav} label="GROWTH" />
+            <NavGroup items={experienceNav} label="EXPERIENCE" />
+            <NavGroup items={platformNav} label="PLATFORM" />
           </div>
 
-          {/* Bottom Profile */}
+          {/* Bottom Pro Card */}
           <div className="mt-4 px-4">
-            <div className="px-3 py-2.5 flex justify-between items-center cursor-pointer hover:bg-surface-hover rounded-xl transition-colors group">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-surface-secondary flex items-center justify-center overflow-hidden border border-border group-hover:border-border-subtle transition-colors">
-                  <span className="text-[10px] font-bold text-content-secondary">AR</span>
-                </div>
-                <div>
-                  <p className="text-[13px] font-bold text-content-primary leading-tight">Arif Rana</p>
-                  <p className="text-[11px] text-content-secondary font-medium">Owner</p>
-                </div>
+            <div className="bg-brand-50 rounded-2xl p-4 border border-brand-100 flex flex-col gap-3">
+              <div className="w-8 h-8 rounded-full bg-brand-100 flex items-center justify-center">
+                <svg className="w-4 h-4 text-brand-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
+                </svg>
               </div>
-              <ChevronDown className="w-4 h-4 text-content-muted group-hover:text-content-secondary" />
+              <div>
+                <h4 className="text-[13px] font-bold text-content-primary mb-1">Upgrade to Pro</h4>
+                <p className="text-[11px] text-content-secondary leading-snug">Unlock 100+ themes<br/>and more features.</p>
+              </div>
+              <button className="w-full bg-brand-600 hover:bg-brand-700 text-white text-[12px] font-bold py-2 rounded-lg transition-colors mt-1">
+                View Plans
+              </button>
             </div>
           </div>
         </div>
