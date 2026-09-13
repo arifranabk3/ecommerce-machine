@@ -324,7 +324,7 @@ export default function IntegrationsDashboardPage() {
                     <div>
                       <h3 className="font-extrabold text-red-900 text-base">Action Required: Sync Failed</h3>
                       <p className="text-sm font-medium text-red-800 mt-1 leading-relaxed">
-                        The connection to Shopify failed due to an invalid access token. This can happen if the app was uninstalled or permissions were revoked on Shopify's end.
+                        The connection to Shopify failed due to an invalid access token. This can happen if the app was uninstalled or permissions were revoked on Shopify&apos;s end.
                       </p>
                       <Button variant="outline" size="sm" className="bg-white border-red-200 text-red-700 hover:bg-red-50 mt-4 font-bold" onClick={() => handleConnect(selectedIntegration)}>
                         Reconnect Now
