@@ -31,9 +31,6 @@ export function tenantStoreScopePlugin(schema: Schema) {
           query.storeId = context.storeId;
         }
       } else {
-        if (process.env.NODE_ENV === 'test') {
-          return;
-        }
         // Enforce safe-by-default: If a scoped model is queried without context, it should fail
         // Unless bypassScope: true is passed explicitly
         throw new Error(`Attempted to query scoped model ${(this as any).model.modelName} without active execution context or bypassScope option.`);

@@ -855,7 +855,7 @@ export interface IPurchaseOrder {
   normalizedPoNumber: string;
   vendorId: string;
   vendorNameSnapshot: string;
-  destinationLocationId: string;
+  destinationWarehouseId: string;
   status: PurchaseOrderStatus;
   source: PurchaseOrderSource;
   salesOrderId?: string;

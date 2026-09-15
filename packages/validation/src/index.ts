@@ -192,7 +192,7 @@ export const updateVariantSchema = createVariantSchema.partial();
 export const stockAdjustmentSchema = z.object({
   productId: z.string().min(1, 'Product ID is required'),
   variantId: z.string().nullable().optional(),
-  locationId: z.string().min(1, 'Location ID is required'),
+  warehouseId: z.string().min(1, 'Warehouse ID is required'),
   quantityDelta: z.number().int('Quantity delta must be an integer'),
   type: z.enum([
     'STOCK_RECEIVED',
@@ -213,8 +213,8 @@ export const stockAdjustmentSchema = z.object({
 export const stockTransferSchema = z.object({
   productId: z.string().min(1, 'Product ID is required'),
   variantId: z.string().nullable().optional(),
-  fromLocationId: z.string().min(1, 'Source location is required'),
-  toLocationId: z.string().min(1, 'Destination location is required'),
+  fromWarehouseId: z.string().min(1, 'Source location is required'),
+  toWarehouseId: z.string().min(1, 'Destination location is required'),
   quantity: z.number().int().positive('Transfer quantity must be positive'),
   reason: z.string().max(200).optional(),
   idempotencyKey: z.string().optional()
@@ -223,7 +223,7 @@ export const stockTransferSchema = z.object({
 export const inventoryReservationSchema = z.object({
   productId: z.string().min(1, 'Product ID is required'),
   variantId: z.string().nullable().optional(),
-  locationId: z.string().min(1, 'Location ID is required'),
+  warehouseId: z.string().min(1, 'Warehouse ID is required'),
   quantity: z.number().int().positive('Reservation quantity must be positive'),
   referenceType: z.string().min(1, 'Reference type is required'),
   referenceId: z.string().min(1, 'Reference ID is required'),
@@ -273,7 +273,7 @@ export const createOrderSchema = z.object({
   customerSnapshot: customerSnapshotSchema,
   billingAddressSnapshot: addressSnapshotSchema.optional(),
   shippingAddressSnapshot: addressSnapshotSchema.optional(),
-  locationId: z.string().min(1, 'Fulfillment location ID is required for stock reservation'),
+  warehouseId: z.string().min(1, 'Fulfillment warehouse ID is required for stock reservation'),
   currency: z.string().length(3).optional().default('USD'),
   items: z.array(orderItemInputSchema).min(1, 'Order must contain at least one line item'),
   discountMinor: z.number().int().min(0).optional().default(0),
@@ -314,13 +314,13 @@ export const createOrderNoteSchema = z.object({
 
 export const updateFulfillmentSchema = z.object({
   status: z.enum(['PENDING', 'READY', 'PROCESSING', 'PACKED', 'SHIPPED', 'DELIVERED', 'FAILED']),
-  locationId: z.string().optional(),
+  warehouseId: z.string().optional(),
   trackingNumber: z.string().max(100).optional(),
   carrierCode: z.string().max(50).optional()
 });
 
 export const createFulfillmentSchema = z.object({
-  locationId: z.string().min(1, 'Location ID is required'),
+  warehouseId: z.string().min(1, 'Warehouse ID is required'),
   trackingNumber: z.string().optional(),
   carrierCode: z.string().optional()
 });
@@ -489,7 +489,7 @@ export const purchaseOrderItemInputSchema = z.object({
 
 export const createPurchaseOrderSchema = z.object({
   vendorId: z.string().min(1, 'Vendor ID is required'),
-  destinationLocationId: z.string().min(1, 'Destination location ID is required'),
+  destinationWarehouseId: z.string().min(1, 'Destination location ID is required'),
   source: z.enum(['MANUAL', 'AUTO_REORDER', 'ORDER_SPLIT', 'LOW_STOCK', 'IMPORT', 'API']).default('MANUAL'),
   salesOrderId: z.string().optional(),
   currency: z.string().length(3).default('USD'),
@@ -502,7 +502,7 @@ export const createPurchaseOrderSchema = z.object({
 });
 
 export const updatePurchaseOrderSchema = z.object({
-  destinationLocationId: z.string().optional(),
+  destinationWarehouseId: z.string().optional(),
   items: z.array(purchaseOrderItemInputSchema).optional(),
   shippingCostMinor: z.number().int().min(0).optional(),
   taxCostMinor: z.number().int().min(0).optional(),
@@ -533,7 +533,7 @@ export const createVendorNoteSchema = z.object({
 export const autoProcurementSchema = z.object({
   mode: z.enum(['LOW_STOCK', 'ORDER_SPLIT']),
   salesOrderId: z.string().optional(),
-  locationId: z.string().optional()
+  warehouseId: z.string().optional()
 });
 
 export type RegisterTenantInput = z.infer<typeof registerTenantSchema>;

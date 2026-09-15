@@ -83,15 +83,15 @@ export class ProcurementController {
       const tenantId = (req as any).tenantId;
       const userId = (req as any).user?.id || 'system';
       const userName = (req as any).user?.name || 'Staff User';
-      const { mode, salesOrderId, locationId } = autoProcurementSchema.parse(req.body);
+      const { mode, salesOrderId, warehouseId } = autoProcurementSchema.parse(req.body);
 
       if (mode === 'ORDER_SPLIT') {
         if (!salesOrderId) return res.status(400).json({ success: false, error: 'salesOrderId required for ORDER_SPLIT mode' });
         const pos = await ProcurementService.splitOrderToProcurement(tenantId, salesOrderId, userId, userName);
         return res.status(200).json({ success: true, data: pos });
       } else {
-        if (!locationId) return res.status(400).json({ success: false, error: 'locationId required for LOW_STOCK mode' });
-        const pos = await ProcurementService.evaluateLowStockProcurement(tenantId, locationId, userId, userName);
+        if (!warehouseId) return res.status(400).json({ success: false, error: 'warehouseId required for LOW_STOCK mode' });
+        const pos = await ProcurementService.evaluateLowStockProcurement(tenantId, warehouseId, userId, userName);
         return res.status(200).json({ success: true, data: pos });
       }
     } catch (err: any) {

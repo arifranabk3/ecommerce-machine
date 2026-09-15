@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from './auth';
 import { AppError } from './error';
 import { StoreModel } from '../models/Store';
 import { UserModel } from '../models/User';
+import { getContext } from '../utils/context';
 
 export async function storeScope(req: AuthenticatedRequest, _res: Response, next: NextFunction) {
   if (!req.user || !req.user.tenantId) {
@@ -39,6 +40,12 @@ export async function storeScope(req: AuthenticatedRequest, _res: Response, next
 
     // 3. Attach validated storeId to request
     (req as any).storeId = requestStoreId;
+    
+    // Populate the active ALS context
+    const context = getContext();
+    if (context) {
+      context.storeId = requestStoreId;
+    }
     
     // Attach helper to scope queries automatically
     req.body = req.body || {};

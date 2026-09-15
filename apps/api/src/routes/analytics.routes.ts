@@ -8,11 +8,13 @@ import { MetricDefinitionService } from '../services/MetricDefinitionService';
 import { RbacService } from '../services/rbac.service';
 import { AppError } from '../middleware/error';
 import { authenticateToken } from '../middleware/auth';
+import { storeScope } from '../middleware/store';
 import { AnalyticsReportType, AnalyticsExportFormat } from '@sellzy/shared';
 
 const router = Router();
 
 router.use(authenticateToken);
+router.use(storeScope);
 
 // Middleware helper to enforce RBAC permissions
 function requirePermission(permissionKey: string) {
@@ -38,7 +40,8 @@ function requirePermission(permissionKey: string) {
 router.get('/overview', requirePermission('analytics.view'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = (req as any).user.tenantId;
-    const data = await AnalyticsService.getOverview(tenantId, req.query as any);
+    const storeId = (req as any).storeId;
+    const data = await AnalyticsService.getOverview(tenantId, { ...req.query, storeId } as any);
     res.json({ success: true, data });
   } catch (err) {
     next(err);
@@ -51,7 +54,8 @@ router.get('/overview', requirePermission('analytics.view'), async (req: Request
 router.get('/sales', requirePermission('analytics.sales.view'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = (req as any).user.tenantId;
-    const data = await AnalyticsService.getSalesAnalytics(tenantId, req.query as any);
+    const storeId = (req as any).storeId;
+    const data = await AnalyticsService.getSalesAnalytics(tenantId, { ...req.query, storeId } as any);
     res.json({ success: true, data });
   } catch (err) {
     next(err);
@@ -64,7 +68,8 @@ router.get('/sales', requirePermission('analytics.sales.view'), async (req: Requ
 router.get('/orders', requirePermission('analytics.orders.view'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = (req as any).user.tenantId;
-    const data = await AnalyticsService.getOrderAnalytics(tenantId, req.query as any);
+    const storeId = (req as any).storeId;
+    const data = await AnalyticsService.getOrderAnalytics(tenantId, { ...req.query, storeId } as any);
     res.json({ success: true, data });
   } catch (err) {
     next(err);
@@ -77,7 +82,8 @@ router.get('/orders', requirePermission('analytics.orders.view'), async (req: Re
 router.get('/profit', requirePermission('analytics.profit.view'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = (req as any).user.tenantId;
-    const data = await AnalyticsService.getProfitAnalytics(tenantId, req.query as any);
+    const storeId = (req as any).storeId;
+    const data = await AnalyticsService.getProfitAnalytics(tenantId, { ...req.query, storeId } as any);
     res.json({ success: true, data });
   } catch (err) {
     next(err);
@@ -90,7 +96,8 @@ router.get('/profit', requirePermission('analytics.profit.view'), async (req: Re
 router.get('/products', requirePermission('analytics.products.view'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = (req as any).user.tenantId;
-    const data = await AnalyticsService.getProductAnalytics(tenantId);
+    const storeId = (req as any).storeId;
+    const data = await AnalyticsService.getProductAnalytics(tenantId, { ...req.query, storeId } as any);
     res.json({ success: true, data });
   } catch (err) {
     next(err);
@@ -103,7 +110,8 @@ router.get('/products', requirePermission('analytics.products.view'), async (req
 router.get('/inventory', requirePermission('analytics.inventory.view'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = (req as any).user.tenantId;
-    const data = await AnalyticsService.getProductAnalytics(tenantId);
+    const storeId = (req as any).storeId;
+    const data = await AnalyticsService.getProductAnalytics(tenantId, { ...req.query, storeId } as any);
     res.json({ success: true, data });
   } catch (err) {
     next(err);
@@ -116,7 +124,8 @@ router.get('/inventory', requirePermission('analytics.inventory.view'), async (r
 router.get('/customers', requirePermission('analytics.customers.view'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = (req as any).user.tenantId;
-    const data = await AnalyticsService.getCustomerAnalytics(tenantId);
+    const storeId = (req as any).storeId;
+    const data = await AnalyticsService.getCustomerAnalytics(tenantId, { ...req.query, storeId } as any);
     res.json({ success: true, data });
   } catch (err) {
     next(err);

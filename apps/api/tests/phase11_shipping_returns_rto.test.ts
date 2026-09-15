@@ -671,7 +671,7 @@ describe('SELLZY — PHASE 11: SHIPPING, RETURNS & RTO SECURITY GATE (155 REAL T
         _id: 'inv_1',
         quantityOnHand: 10,
         quantityAvailable: 10,
-        locationId: 'loc_1',
+        warehouseId: 'loc_1',
         save: jest.fn().mockResolvedValue(true)
       };
 
@@ -1367,7 +1367,7 @@ describe('SELLZY — PHASE 11: SHIPPING, RETURNS & RTO SECURITY GATE (155 REAL T
         _id: filter._id, returnId: 'ret_1', productId: `prod_${filter._id}`, requestedQuantity: 1, receivedQuantity: 0, approvedQuantity: 0, save: jest.fn()
       })) as any);
       jest.spyOn(ReturnInspectionModel, 'create').mockResolvedValue({} as any);
-      jest.spyOn(InventoryModel, 'findOne').mockReturnValue(mockQuery({ _id: 'inv_1', quantityOnHand: 10, quantityAvailable: 10, locationId: 'loc_1', save: jest.fn() }));
+      jest.spyOn(InventoryModel, 'findOne').mockReturnValue(mockQuery({ _id: 'inv_1', quantityOnHand: 10, quantityAvailable: 10, warehouseId: 'loc_1', save: jest.fn() }));
       jest.spyOn(InventoryMovementModel, 'create').mockResolvedValue({} as any);
 
       await ReturnService.inspectAndReceiveReturn(tenantA, 'ret_1', items, userAId);
@@ -2036,7 +2036,7 @@ describe('SELLZY — PHASE 11: SHIPPING, RETURNS & RTO SECURITY GATE (155 REAL T
     it('135. Restock inventory creates InventoryMovement with reference CUSTOMER_RETURN', async () => {
       const mockReturnItem = { _id: 'ret_item_1', returnId: 'ret_1', productId: 'prod_1', requestedQuantity: 1, receivedQuantity: 0, approvedQuantity: 0, save: jest.fn() };
       const mockReturn = { _id: 'ret_1', tenantId: tenantA, status: CustomerReturnStatus.APPROVED, save: jest.fn() };
-      const mockInv = { _id: 'inv_1', quantityOnHand: 10, quantityAvailable: 10, locationId: 'loc_1', save: jest.fn() };
+      const mockInv = { _id: 'inv_1', quantityOnHand: 10, quantityAvailable: 10, warehouseId: 'loc_1', save: jest.fn() };
 
       jest.spyOn(CustomerReturnModel, 'findOne').mockReturnValue(mockQuery(mockReturn));
       jest.spyOn(CustomerReturnItemModel, 'findOne').mockReturnValue(mockQuery(mockReturnItem));
