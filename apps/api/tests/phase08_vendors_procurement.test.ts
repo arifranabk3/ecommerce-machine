@@ -15,7 +15,7 @@ import { VendorCounterModel } from '../src/models/VendorCounter';
 import { PurchaseOrderCounterModel } from '../src/models/PurchaseOrderCounter';
 import { ProductModel } from '../src/models/Product';
 import { ProductVariantModel } from '../src/models/ProductVariant';
-import { LocationModel } from '../src/models/Location';
+import { WarehouseModel } from '../src/models/Warehouse';
 import { InventoryModel } from '../src/models/Inventory';
 import { InventoryMovementModel } from '../src/models/InventoryMovement';
 import { OrderModel } from '../src/models/Order';
@@ -203,7 +203,7 @@ describe('Phase 08 — Vendors & Procurement Production-Grade Master Gate Suite 
     it('12. Vendor A cannot create PO against B vendor', async () => {
       jest.spyOn(VendorModel, 'findOne').mockReturnValue(mockQuery(null));
       const res = await request(app).post('/api/v1/procurement/purchase-orders').set('Authorization', `Bearer ${tokenA}`).send({
-        vendorId: 'ven_b', destinationLocationId: 'loc_1', items: [{ productId: 'prod_1', quantity: 5, unitCostMinor: 1000 }]
+        vendorId: 'ven_b', destinationWarehouseId: 'loc_1', items: [{ productId: 'prod_1', quantity: 5, unitCostMinor: 1000 }]
       });
       expect(res.status).toBe(400);
     });
@@ -307,7 +307,7 @@ describe('Phase 08 — Vendors & Procurement Production-Grade Master Gate Suite 
     });
 
     it('29. procurement.auto_order enforced', async () => {
-      const res = await request(app).post('/api/v1/procurement/auto-order').set('Authorization', `Bearer ${tokenRestricted}`).send({ mode: 'LOW_STOCK', locationId: 'loc1' });
+      const res = await request(app).post('/api/v1/procurement/auto-order').set('Authorization', `Bearer ${tokenRestricted}`).send({ mode: 'LOW_STOCK', warehouseId: 'loc1' });
       expect(res.status).toBe(403);
     });
   });
@@ -346,7 +346,7 @@ describe('Phase 08 — Vendors & Procurement Production-Grade Master Gate Suite 
     it('34. archived vendor cannot receive new procurement', async () => {
       jest.spyOn(VendorModel, 'findOne').mockReturnValue(mockQuery({ _id: 'v_archived', status: VendorStatus.ARCHIVED }));
       await expect(ProcurementService.createPurchaseOrder(tenantA, {
-        vendorId: 'v_archived', destinationLocationId: 'loc1', source: PurchaseOrderSource.MANUAL, currency: 'USD', items: [{ productId: 'p1', quantity: 1, unitCostMinor: 100 }], shippingCostMinor: 0, taxCostMinor: 0
+        vendorId: 'v_archived', destinationWarehouseId: 'loc1', source: PurchaseOrderSource.MANUAL, currency: 'USD', items: [{ productId: 'p1', quantity: 1, unitCostMinor: 100 }], shippingCostMinor: 0, taxCostMinor: 0
       }, 'u1', 'Name')).rejects.toThrow();
     });
 
@@ -577,7 +577,7 @@ describe('Phase 08 — Vendors & Procurement Production-Grade Master Gate Suite 
 
     it('63. server calculates subtotal', async () => {
       jest.spyOn(VendorModel, 'findOne').mockReturnValue(mockQuery({ _id: 'v1', name: 'V1' }));
-      jest.spyOn(LocationModel, 'findOne').mockReturnValue(mockQuery({ _id: 'loc1' }));
+      jest.spyOn(WarehouseModel, 'findOne').mockReturnValue(mockQuery({ _id: 'loc1' }));
       jest.spyOn(ProductModel, 'findOne').mockReturnValue(mockQuery({ _id: 'p1', name: 'P1', sku: 'SKU1' }));
       jest.spyOn(VendorProductModel, 'findOne').mockReturnValue(mockQuery(null));
       jest.spyOn(VendorNumberService, 'generatePoNumber').mockResolvedValue({ poNumber: 'PO-1', normalizedPoNumber: 'PO-1' });
@@ -586,7 +586,7 @@ describe('Phase 08 — Vendors & Procurement Production-Grade Master Gate Suite 
       jest.spyOn(ProcurementTimelineModel, 'create').mockResolvedValue({} as any);
 
       const po = await ProcurementService.createPurchaseOrder(tenantA, {
-        vendorId: 'v1', destinationLocationId: 'loc1', source: PurchaseOrderSource.MANUAL, currency: 'USD',
+        vendorId: 'v1', destinationWarehouseId: 'loc1', source: PurchaseOrderSource.MANUAL, currency: 'USD',
         items: [{ productId: 'p1', quantity: 10, unitCostMinor: 500 }], shippingCostMinor: 100, taxCostMinor: 50
       }, 'u1', 'Name');
 
@@ -595,7 +595,7 @@ describe('Phase 08 — Vendors & Procurement Production-Grade Master Gate Suite 
 
     it('64. server calculates total', async () => {
       jest.spyOn(VendorModel, 'findOne').mockReturnValue(mockQuery({ _id: 'v1', name: 'V1' }));
-      jest.spyOn(LocationModel, 'findOne').mockReturnValue(mockQuery({ _id: 'loc1' }));
+      jest.spyOn(WarehouseModel, 'findOne').mockReturnValue(mockQuery({ _id: 'loc1' }));
       jest.spyOn(ProductModel, 'findOne').mockReturnValue(mockQuery({ _id: 'p1', name: 'P1', sku: 'SKU1' }));
       jest.spyOn(VendorProductModel, 'findOne').mockReturnValue(mockQuery(null));
       jest.spyOn(VendorNumberService, 'generatePoNumber').mockResolvedValue({ poNumber: 'PO-1', normalizedPoNumber: 'PO-1' });
@@ -604,7 +604,7 @@ describe('Phase 08 — Vendors & Procurement Production-Grade Master Gate Suite 
       jest.spyOn(ProcurementTimelineModel, 'create').mockResolvedValue({} as any);
 
       const po = await ProcurementService.createPurchaseOrder(tenantA, {
-        vendorId: 'v1', destinationLocationId: 'loc1', source: PurchaseOrderSource.MANUAL, currency: 'USD',
+        vendorId: 'v1', destinationWarehouseId: 'loc1', source: PurchaseOrderSource.MANUAL, currency: 'USD',
         items: [{ productId: 'p1', quantity: 10, unitCostMinor: 500 }], shippingCostMinor: 100, taxCostMinor: 50
       }, 'u1', 'Name');
 
@@ -613,7 +613,7 @@ describe('Phase 08 — Vendors & Procurement Production-Grade Master Gate Suite 
 
     it('65. client subtotal manipulation rejected', async () => {
       jest.spyOn(VendorModel, 'findOne').mockReturnValue(mockQuery({ _id: 'v1', name: 'V1' }));
-      jest.spyOn(LocationModel, 'findOne').mockReturnValue(mockQuery({ _id: 'loc1' }));
+      jest.spyOn(WarehouseModel, 'findOne').mockReturnValue(mockQuery({ _id: 'loc1' }));
       jest.spyOn(ProductModel, 'findOne').mockReturnValue(mockQuery({ _id: 'p1', name: 'P1', sku: 'SKU1' }));
       jest.spyOn(VendorProductModel, 'findOne').mockReturnValue(mockQuery(null));
       jest.spyOn(VendorNumberService, 'generatePoNumber').mockResolvedValue({ poNumber: 'PO-1', normalizedPoNumber: 'PO-1' });
@@ -622,14 +622,14 @@ describe('Phase 08 — Vendors & Procurement Production-Grade Master Gate Suite 
       jest.spyOn(ProcurementTimelineModel, 'create').mockResolvedValue({} as any);
 
       const res = await request(app).post('/api/v1/procurement/purchase-orders').set('Authorization', `Bearer ${tokenA}`).send({
-        vendorId: 'v1', destinationLocationId: 'loc1', items: [{ productId: 'p1', quantity: 2, unitCostMinor: 1000 }], subtotalMinor: 1 // Evil client manipulation
+        vendorId: 'v1', destinationWarehouseId: 'loc1', items: [{ productId: 'p1', quantity: 2, unitCostMinor: 1000 }], subtotalMinor: 1 // Evil client manipulation
       });
       expect(res.status).toBe(201);
     });
 
     it('66. client total manipulation rejected', async () => {
       jest.spyOn(VendorModel, 'findOne').mockReturnValue(mockQuery({ _id: 'v1', name: 'V1' }));
-      jest.spyOn(LocationModel, 'findOne').mockReturnValue(mockQuery({ _id: 'loc1' }));
+      jest.spyOn(WarehouseModel, 'findOne').mockReturnValue(mockQuery({ _id: 'loc1' }));
       jest.spyOn(ProductModel, 'findOne').mockReturnValue(mockQuery({ _id: 'p1', name: 'P1', sku: 'SKU1' }));
       jest.spyOn(VendorProductModel, 'findOne').mockReturnValue(mockQuery(null));
       jest.spyOn(VendorNumberService, 'generatePoNumber').mockResolvedValue({ poNumber: 'PO-1', normalizedPoNumber: 'PO-1' });
@@ -638,33 +638,33 @@ describe('Phase 08 — Vendors & Procurement Production-Grade Master Gate Suite 
       jest.spyOn(ProcurementTimelineModel, 'create').mockResolvedValue({} as any);
 
       const res = await request(app).post('/api/v1/procurement/purchase-orders').set('Authorization', `Bearer ${tokenA}`).send({
-        vendorId: 'v1', destinationLocationId: 'loc1', items: [{ productId: 'p1', quantity: 2, unitCostMinor: 1000 }], totalMinor: 1 // Evil client manipulation
+        vendorId: 'v1', destinationWarehouseId: 'loc1', items: [{ productId: 'p1', quantity: 2, unitCostMinor: 1000 }], totalMinor: 1 // Evil client manipulation
       });
       expect(res.status).toBe(201);
     });
 
     it('67. negative quantity rejected', async () => {
       const res = await request(app).post('/api/v1/procurement/purchase-orders').set('Authorization', `Bearer ${tokenA}`).send({
-        vendorId: 'v1', destinationLocationId: 'loc1', items: [{ productId: 'p1', quantity: -5, unitCostMinor: 1000 }]
+        vendorId: 'v1', destinationWarehouseId: 'loc1', items: [{ productId: 'p1', quantity: -5, unitCostMinor: 1000 }]
       });
       expect(res.status).toBe(400);
     });
 
     it('68. zero quantity rejected', async () => {
       const res = await request(app).post('/api/v1/procurement/purchase-orders').set('Authorization', `Bearer ${tokenA}`).send({
-        vendorId: 'v1', destinationLocationId: 'loc1', items: [{ productId: 'p1', quantity: 0, unitCostMinor: 1000 }]
+        vendorId: 'v1', destinationWarehouseId: 'loc1', items: [{ productId: 'p1', quantity: 0, unitCostMinor: 1000 }]
       });
       expect(res.status).toBe(400);
     });
 
     it('69. invalid product rejected', async () => {
       jest.spyOn(VendorModel, 'findOne').mockReturnValue(mockQuery({ _id: 'v1' }));
-      jest.spyOn(LocationModel, 'findOne').mockReturnValue(mockQuery({ _id: 'loc1' }));
+      jest.spyOn(WarehouseModel, 'findOne').mockReturnValue(mockQuery({ _id: 'loc1' }));
       jest.spyOn(ProductModel, 'findOne').mockReturnValue(mockQuery(null));
       jest.spyOn(VendorNumberService, 'generatePoNumber').mockResolvedValue({ poNumber: 'PO-1', normalizedPoNumber: 'PO-1' });
 
       await expect(ProcurementService.createPurchaseOrder(tenantA, {
-        vendorId: 'v1', destinationLocationId: 'loc1', source: PurchaseOrderSource.MANUAL, currency: 'USD',
+        vendorId: 'v1', destinationWarehouseId: 'loc1', source: PurchaseOrderSource.MANUAL, currency: 'USD',
         items: [{ productId: 'p_invalid', quantity: 1, unitCostMinor: 100 }], shippingCostMinor: 0, taxCostMinor: 0
       }, 'u1', 'Name')).rejects.toThrow();
     });
@@ -672,7 +672,7 @@ describe('Phase 08 — Vendors & Procurement Production-Grade Master Gate Suite 
     it('70. invalid vendor rejected', async () => {
       jest.spyOn(VendorModel, 'findOne').mockReturnValue(mockQuery(null));
       await expect(ProcurementService.createPurchaseOrder(tenantA, {
-        vendorId: 'v_invalid', destinationLocationId: 'loc1', source: PurchaseOrderSource.MANUAL, currency: 'USD',
+        vendorId: 'v_invalid', destinationWarehouseId: 'loc1', source: PurchaseOrderSource.MANUAL, currency: 'USD',
         items: [{ productId: 'p1', quantity: 1, unitCostMinor: 100 }], shippingCostMinor: 0, taxCostMinor: 0
       }, 'u1', 'Name')).rejects.toThrow();
     });
@@ -756,7 +756,7 @@ describe('Phase 08 — Vendors & Procurement Production-Grade Master Gate Suite 
       jest.spyOn(PurchaseOrderModel, 'findOne').mockImplementation(() => mockQuery(existingPO));
 
       const res = await ProcurementService.createPurchaseOrder(tenantA, {
-        vendorId: 'v1', destinationLocationId: 'loc1', source: PurchaseOrderSource.MANUAL, currency: 'USD',
+        vendorId: 'v1', destinationWarehouseId: 'loc1', source: PurchaseOrderSource.MANUAL, currency: 'USD',
         items: [{ productId: 'p1', quantity: 1, unitCostMinor: 100 }], shippingCostMinor: 0, taxCostMinor: 0,
         idempotencyKey: 'idemp1'
       }, 'u1', 'Name');
@@ -997,7 +997,7 @@ describe('Phase 08 — Vendors & Procurement Production-Grade Master Gate Suite 
     });
 
     it('125. received quantity updates inventory correctly', async () => {
-      jest.spyOn(PurchaseOrderModel, 'findOne').mockReturnValue(mockQuery({ _id: 'po1', status: PurchaseOrderStatus.SUBMITTED, destinationLocationId: 'loc1', poNumber: 'PO-1' }));
+      jest.spyOn(PurchaseOrderModel, 'findOne').mockReturnValue(mockQuery({ _id: 'po1', status: PurchaseOrderStatus.SUBMITTED, destinationWarehouseId: 'loc1', poNumber: 'PO-1' }));
       jest.spyOn(PurchaseOrderItemModel, 'findOne').mockReturnValue(mockQuery({ _id: 'it1', productId: 'p1', orderedQuantity: 10, receivedQuantity: 0, save: jest.fn() }));
       const invMock = { onHandQuantity: 5, availableQuantity: 5, save: jest.fn() };
       jest.spyOn(InventoryModel, 'findOne').mockReturnValue(mockQuery(invMock));

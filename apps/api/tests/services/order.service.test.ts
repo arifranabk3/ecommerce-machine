@@ -94,7 +94,7 @@ describe('OrderService - Phase C', () => {
     paymentMethod: PaymentMethod.PREPAID,
     customerId: 'cust_123',
     customerSnapshot: { name: 'John Doe', email: 'john@example.com' },
-    locationId: warehouseId, // for inventory reservation
+    warehouseId: warehouseId, // for inventory reservation
     items: [
       {
         productId,

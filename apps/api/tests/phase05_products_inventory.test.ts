@@ -6,7 +6,7 @@ import { redis } from '../src/config/redis';
 import { ProductModel } from '../src/models/Product';
 import { ProductVariantModel } from '../src/models/ProductVariant';
 import { CategoryModel } from '../src/models/Category';
-import { LocationModel } from '../src/models/Location';
+import { WarehouseModel } from '../src/models/Warehouse';
 import { InventoryModel } from '../src/models/Inventory';
 import { InventoryMovementModel } from '../src/models/InventoryMovement';
 import { InventoryReservationModel } from '../src/models/InventoryReservation';
@@ -17,7 +17,7 @@ import { RoleModel } from '../src/models/Role';
 import { TenantMembershipModel } from '../src/models/TenantMembership';
 import { EntitlementService } from '../src/services/entitlement.service';
 import { CategoryService } from '../src/services/category.service';
-import { LocationService } from '../src/services/location.service';
+import { WarehouseService } from '../src/services/warehouse.service';
 import { ProductService } from '../src/services/product.service';
 import { InventoryService } from '../src/services/inventory.service';
 import { CacheService } from '../src/services/cache.service';
@@ -53,7 +53,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
   beforeAll(() => {
     redis.disconnect();
     jest.spyOn(EntitlementService, 'checkTenantLimit').mockResolvedValue(true);
-    jest.spyOn(LocationModel, 'updateMany').mockResolvedValue({ acknowledged: true, modifiedCount: 1 } as any);
+    jest.spyOn(WarehouseModel, 'updateMany').mockResolvedValue({ acknowledged: true, modifiedCount: 1 } as any);
 
     jest.spyOn(SessionModel, 'findOne').mockImplementation((() => {
       return Promise.resolve({
@@ -170,17 +170,17 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
     }) as any);
     jest.spyOn(InventoryMovementModel, 'countDocuments').mockResolvedValue(0);
 
-    const res = await InventoryService.getInventoryMovements(tenantA, { locationId: 'loc_b' });
+    const res = await InventoryService.getInventoryMovements(tenantA, { warehouseId: 'loc_b' });
     expect(res.items).toHaveLength(0);
   });
 
   it('7. Tenant A cannot access Tenant B location', async () => {
-    jest.spyOn(LocationModel, 'findOne').mockImplementation(((query: any) => {
+    jest.spyOn(WarehouseModel, 'findOne').mockImplementation(((query: any) => {
       if (query.tenantId === tenantA && query._id === 'loc_b') return Promise.resolve(null);
       return Promise.resolve({ _id: 'loc_b', tenantId: tenantB });
     }) as any);
 
-    const res = await request(app).get('/api/v1/locations/loc_b').set('Authorization', `Bearer ${tokenA}`);
+    const res = await request(app).get('/api/v1/warehouses/loc_b').set('Authorization', `Bearer ${tokenA}`);
     expect(res.status).toBe(404);
   });
 
@@ -232,7 +232,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
     const res = await request(app)
       .post('/api/v1/inventory/adjustments')
       .set('Authorization', `Bearer ${tokenNoPerms}`)
-      .send({ productId: 'p1', locationId: 'l1', quantityDelta: 10, reason: 'Adjustment' });
+      .send({ productId: 'p1', warehouseId: 'l1', quantityDelta: 10, reason: 'Adjustment' });
 
     expect(res.status).toBe(403);
   });
@@ -241,14 +241,14 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
     const res = await request(app)
       .post('/api/v1/inventory/transfers')
       .set('Authorization', `Bearer ${tokenNoPerms}`)
-      .send({ productId: 'p1', fromLocationId: 'l1', toLocationId: 'l2', quantity: 5 });
+      .send({ productId: 'p1', fromWarehouseId: 'l1', toWarehouseId: 'l2', quantity: 5 });
 
     expect(res.status).toBe(403);
   });
 
   it('14. inventory.manage protected operations', async () => {
     const res = await request(app)
-      .post('/api/v1/locations/loc_1/archive')
+      .post('/api/v1/warehouses/loc_1/archive')
       .set('Authorization', `Bearer ${tokenNoPerms}`);
 
     expect(res.status).toBe(403);
@@ -272,10 +272,10 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
   });
 
   it('17. duplicate location code rejected', async () => {
-    jest.spyOn(LocationModel, 'findOne').mockResolvedValue({ _id: 'loc_dup', normalizedCode: 'WH-DUP' } as any);
+    jest.spyOn(WarehouseModel, 'findOne').mockResolvedValue({ _id: 'loc_dup', normalizedCode: 'WH-DUP' } as any);
 
     await expect(
-      LocationService.createLocation(tenantA, { name: 'Loc Dup', code: 'WH-DUP' })
+      WarehouseService.createLocation(tenantA, { name: 'Loc Dup', code: 'WH-DUP' })
     ).rejects.toThrow('Location with this code already exists');
   });
 
@@ -321,12 +321,12 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
 
   it('22. insufficient stock cannot create negative inventory', async () => {
     jest.spyOn(ProductModel, 'findOne').mockResolvedValue({ _id: 'p1', tenantId: tenantA } as any);
-    jest.spyOn(LocationModel, 'findOne').mockResolvedValue({ _id: 'l1', tenantId: tenantA, isActive: true } as any);
+    jest.spyOn(WarehouseModel, 'findOne').mockResolvedValue({ _id: 'l1', tenantId: tenantA, isActive: true } as any);
     jest.spyOn(InventoryModel, 'findOne').mockResolvedValue({ _id: 'inv_1', quantityOnHand: 2, quantityReserved: 0, quantityAvailable: 2 } as any);
     jest.spyOn(InventoryModel, 'findOneAndUpdate').mockResolvedValue(null as any); // Condition failed
 
     await expect(
-      InventoryService.adjustStock(tenantA, { productId: 'p1', locationId: 'l1', quantityDelta: -10, reason: 'Deduct' })
+      InventoryService.adjustStock(tenantA, { productId: 'p1', warehouseId: 'l1', quantityDelta: -10, reason: 'Deduct' })
     ).rejects.toThrow('Insufficient available stock');
   });
 
@@ -377,7 +377,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
 
     const res = await InventoryService.adjustStock(tenantA, {
       productId: 'p1',
-      locationId: 'l1',
+      warehouseId: 'l1',
       quantityDelta: 20,
       idempotencyKey: 'idem_key_unique',
       reason: 'Adjustment'
@@ -391,12 +391,12 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
     const existingMov = { _id: 'mov_transfer_idem', idempotencyKey: 'idem_transfer_key-OUT' };
     jest.spyOn(InventoryMovementModel, 'findOne').mockResolvedValue(existingMov as any);
     jest.spyOn(InventoryModel, 'findOne').mockResolvedValue({ _id: 'inv_from', quantityOnHand: 10 } as any);
-    jest.spyOn(LocationModel, 'findOne').mockResolvedValue({ _id: 'loc', tenantId: tenantA, isActive: true } as any);
+    jest.spyOn(WarehouseModel, 'findOne').mockResolvedValue({ _id: 'loc', tenantId: tenantA, isActive: true } as any);
 
     const res = await InventoryService.transferStock(tenantA, {
       productId: 'p1',
-      fromLocationId: 'l1',
-      toLocationId: 'l2',
+      fromWarehouseId: 'l1',
+      toWarehouseId: 'l2',
       quantity: 10,
       idempotencyKey: 'idem_transfer_key'
     });
@@ -415,7 +415,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
       _id: 'res_rel',
       tenantId: tenantA,
       productId: 'p1',
-      locationId: 'l1',
+      warehouseId: 'l1',
       quantity: 10,
       status: ReservationStatus.ACTIVE,
       save: jest.fn().mockResolvedValue(true)
@@ -441,44 +441,44 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
 
   it('30. adjustment creates movement + audit', async () => {
     jest.spyOn(ProductModel, 'findOne').mockResolvedValue({ _id: 'p1', tenantId: tenantA, lowStockThreshold: 10 } as any);
-    jest.spyOn(LocationModel, 'findOne').mockResolvedValue({ _id: 'l1', tenantId: tenantA, isActive: true } as any);
+    jest.spyOn(WarehouseModel, 'findOne').mockResolvedValue({ _id: 'l1', tenantId: tenantA, isActive: true } as any);
     jest.spyOn(InventoryModel, 'findOne').mockResolvedValue(null as any);
     jest.spyOn(InventoryModel, 'findOneAndUpdate').mockResolvedValue({ _id: 'inv_adj', quantityOnHand: 20, quantityAvailable: 20 } as any);
     
     const movSpy = jest.spyOn(InventoryMovementModel, 'create').mockResolvedValue({ _id: 'mov_created' } as any);
     const auditSpy = jest.spyOn(AuditLogModel, 'create').mockResolvedValue({ _id: 'audit_created' } as any);
 
-    await InventoryService.adjustStock(tenantA, { productId: 'p1', locationId: 'l1', quantityDelta: 20, reason: 'Intake' }, 'user_a');
+    await InventoryService.adjustStock(tenantA, { productId: 'p1', warehouseId: 'l1', quantityDelta: 20, reason: 'Intake' }, 'user_a');
 
     expect(movSpy).toHaveBeenCalled();
     expect(auditSpy).toHaveBeenCalled();
   });
 
   it('31. cross-tenant transfer rejected', async () => {
-    jest.spyOn(LocationModel, 'findOne').mockImplementation(((query: any) => {
+    jest.spyOn(WarehouseModel, 'findOne').mockImplementation(((query: any) => {
       if (query.tenantId === tenantA && query._id === 'loc_b') return Promise.resolve(null);
       return Promise.resolve({ _id: 'loc_a', tenantId: tenantA, isActive: true });
     }) as any);
 
     await expect(
-      InventoryService.transferStock(tenantA, { productId: 'p1', fromLocationId: 'loc_a', toLocationId: 'loc_b', quantity: 5 })
-    ).rejects.toThrow('Destination location not found or inactive');
+      InventoryService.transferStock(tenantA, { productId: 'p1', fromWarehouseId: 'loc_a', toWarehouseId: 'loc_b', quantity: 5 })
+    ).rejects.toThrow('Destination warehouse not found or inactive');
   });
 
   it('32. inactive location cannot receive normal stock', async () => {
     jest.spyOn(ProductModel, 'findOne').mockResolvedValue({ _id: 'p1', tenantId: tenantA } as any);
-    jest.spyOn(LocationModel, 'findOne').mockResolvedValue(null as any); // Inactive or missing location
+    jest.spyOn(WarehouseModel, 'findOne').mockResolvedValue(null as any); // Inactive or missing location
 
     await expect(
-      InventoryService.adjustStock(tenantA, { productId: 'p1', locationId: 'loc_inactive', quantityDelta: 10, reason: 'Stock In' })
-    ).rejects.toThrow('Location not found or inactive in this tenant');
+      InventoryService.adjustStock(tenantA, { productId: 'p1', warehouseId: 'loc_inactive', quantityDelta: 10, reason: 'Stock In' })
+    ).rejects.toThrow('Warehouse not found or inactive in this tenant');
   });
 
   it('33. protected inventory operation returns 403', async () => {
     const res = await request(app)
       .post('/api/v1/inventory/adjustments')
       .set('Authorization', `Bearer ${tokenNoPerms}`)
-      .send({ productId: 'p1', locationId: 'l1', quantityDelta: 10, reason: 'Deduct' });
+      .send({ productId: 'p1', warehouseId: 'l1', quantityDelta: 10, reason: 'Deduct' });
 
     expect(res.status).toBe(403);
   });

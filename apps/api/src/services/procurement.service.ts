@@ -33,7 +33,7 @@ export class ProcurementService {
     const vendor = (await VendorModel.findOne({ tenantId, _id: input.vendorId }).exec()) as any;
     if (!vendor) throw new Error('Vendor not found');
 
-    const location = await WarehouseModel.findOne({ tenantId, _id: input.destinationLocationId }).exec();
+    const location = await WarehouseModel.findOne({ tenantId, _id: input.destinationWarehouseId }).exec();
     if (!location) throw new Error('Destination location not found');
 
     const { poNumber, normalizedPoNumber } = await VendorNumberService.generatePoNumber(tenantId);
@@ -97,7 +97,7 @@ export class ProcurementService {
       normalizedPoNumber,
       vendorId: input.vendorId,
       vendorNameSnapshot: vendor.name,
-      destinationLocationId: input.destinationLocationId,
+      destinationWarehouseId: input.destinationWarehouseId,
       status: PurchaseOrderStatus.DRAFT,
       source: input.source,
       salesOrderId: input.salesOrderId || undefined,
@@ -264,7 +264,7 @@ export class ProcurementService {
     const invQuery: any = {
       tenantId,
       productId: item.productId,
-      locationId: po.destinationLocationId,
+      warehouseId: po.destinationWarehouseId,
       variantId: item.variantId || null
     };
 
@@ -274,7 +274,7 @@ export class ProcurementService {
         tenantId,
         productId: item.productId,
         variantId: item.variantId || undefined,
-        locationId: po.destinationLocationId,
+        warehouseId: po.destinationWarehouseId,
         onHandQuantity: receivedQuantity,
         reservedQuantity: 0,
         availableQuantity: receivedQuantity,
@@ -292,7 +292,7 @@ export class ProcurementService {
       tenantId,
       productId: item.productId,
       variantId: item.variantId || undefined,
-      locationId: po.destinationLocationId,
+      warehouseId: po.destinationWarehouseId,
       type: InventoryMovementType.STOCK_RECEIVED,
       quantityDelta: receivedQuantity,
       balanceAfter: inv.onHandQuantity,
@@ -359,7 +359,7 @@ export class ProcurementService {
         tenantId,
         {
           vendorId,
-          destinationLocationId: salesOrder.shippingAddressSnapshot ? 'default-location' : 'default-location',
+          destinationWarehouseId: salesOrder.shippingAddressSnapshot ? 'default-location' : 'default-location',
           source: PurchaseOrderSource.ORDER_SPLIT,
           salesOrderId,
           currency: salesOrder.currency,
@@ -380,10 +380,10 @@ export class ProcurementService {
   /**
    * Auto-evaluate low-stock items across warehouses and create reorder Purchase Orders.
    */
-  static async evaluateLowStockProcurement(tenantId: string, locationId: string, actorUserId: string, actorName: string) {
+  static async evaluateLowStockProcurement(tenantId: string, warehouseId: string, actorUserId: string, actorName: string) {
     const lowStockInventories = (await InventoryModel.find({
       tenantId,
-      locationId,
+      warehouseId,
       $expr: { $lte: ['$availableQuantity', '$reorderPoint'] }
     }).exec()) as any[];
 
@@ -422,13 +422,13 @@ export class ProcurementService {
         tenantId,
         {
           vendorId,
-          destinationLocationId: locationId,
+          destinationWarehouseId: warehouseId,
           source: PurchaseOrderSource.LOW_STOCK,
           currency: 'USD',
           items,
           shippingCostMinor: 0,
           taxCostMinor: 0,
-          notes: `Auto-generated for low-stock reorder at location ${locationId}`
+          notes: `Auto-generated for low-stock reorder at location ${warehouseId}`
         },
         actorUserId,
         actorName

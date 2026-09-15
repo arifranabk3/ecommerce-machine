@@ -11,11 +11,8 @@ export function contextMiddleware(req: AuthenticatedRequest, res: Response, next
     permissions: (req as any).permissions
   };
 
-  // If no tenantId is resolved by this point, we just run without setting a restricted context,
-  // or default to an empty context, which will trigger errors on restricted queries.
-  if (!context.tenantId) {
-    return next();
-  }
+  // Even if no tenantId is resolved initially, we still run with an empty context.
+  // Downstream auth/store middlewares will populate this context object once validated.
 
   runWithContext(context, () => {
     next();

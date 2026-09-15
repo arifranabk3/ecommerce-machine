@@ -1,6 +1,7 @@
 'use client';
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, 
@@ -99,9 +100,7 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center gap-3 px-6 mb-8">
-            <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center shadow-sm">
-              <span className="text-white font-extrabold text-lg italic">S</span>
-            </div>
+            <Image src="/s-logo.png" alt="Sellzy Logo" width={32} height={32} className="object-contain" />
             <div>
               <h1 className="font-extrabold text-lg text-content-primary tracking-tight leading-none">Sellzy</h1>
             </div>

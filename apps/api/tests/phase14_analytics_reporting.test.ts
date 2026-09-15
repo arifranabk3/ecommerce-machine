@@ -45,6 +45,7 @@ function mockQuery(result: any): any {
 
 describe('SELLZY — PHASE 14 MASTER IMPLEMENTATION TEST SUITE (160+ TEST CASES)', () => {
   const tenantA = 'tn_analytics_a';
+  const storeA = 'store_test_fallback';
   const tenantB = 'tn_analytics_b';
   const userAdminA = 'usr_admin_analytics_a';
   const userRestricted = 'usr_restricted_analytics';
@@ -84,9 +85,25 @@ describe('SELLZY — PHASE 14 MASTER IMPLEMENTATION TEST SUITE (160+ TEST CASES)
 
     jest.spyOn(UserModel, 'findOne').mockImplementation(((filter: any) => {
       if (filter && filter._id === userAdminA) {
-        return mockQuery({ _id: userAdminA, tenantId: tenantA, status: 'ACTIVE' });
+        return mockQuery({ _id: userAdminA, tenantId: tenantA, status: 'ACTIVE', roles: ['Owner'], isOwner: true, allowedStoreIds: [storeA] });
       }
-      return mockQuery({ _id: userRestricted, tenantId: tenantA, status: 'ACTIVE' });
+      return mockQuery({ _id: userRestricted, tenantId: tenantA, status: 'ACTIVE', roles: ['RestrictedRole'], isOwner: false, allowedStoreIds: [storeA] });
+    }) as any);
+
+    // Provide a mocked StoreModel to pass storeScope validation
+    const { StoreModel } = require('../src/models/Store');
+    jest.spyOn(StoreModel, 'findOne').mockImplementation(((filter: any) => {
+      if (filter && (filter._id === storeA || filter.storeId === storeA)) {
+        return mockQuery({ _id: storeA, storeId: storeA, tenantId: tenantA, status: 'ACTIVE' });
+      }
+      return mockQuery(null);
+    }) as any);
+
+    jest.spyOn(RbacService, 'getEffectivePermissions').mockImplementation((async (userId: string, tenantId: string) => {
+      if (userId === userAdminA) {
+        return ['*'];
+      }
+      return ['analytics.view', 'analytics.sales.view'];
     }) as any);
 
     jest.spyOn(SessionModel, 'findOne').mockImplementation(((filter: any) => {
@@ -125,7 +142,7 @@ describe('SELLZY — PHASE 14 MASTER IMPLEMENTATION TEST SUITE (160+ TEST CASES)
 
     it('1.3 Saved report created by Tenant A is isolated from Tenant B', async () => {
       jest.spyOn(SavedReportModel, 'find').mockReturnValue(mockQuery([]));
-      const res = await request(app).get('/api/v1/analytics/reports').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/reports').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
       expect(res.body.reports).toEqual([]);
     });
@@ -159,7 +176,7 @@ describe('SELLZY — PHASE 14 MASTER IMPLEMENTATION TEST SUITE (160+ TEST CASES)
       jest.spyOn(ReturnToOriginModel, 'countDocuments').mockResolvedValue(0);
       jest.spyOn(CustomerReturnModel, 'countDocuments').mockResolvedValue(0);
 
-      const res = await request(app).get('/api/v1/analytics/overview').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/overview').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
       expect(res.body.data.tenantId).toBe(tenantA);
     });
@@ -261,13 +278,13 @@ describe('SELLZY — PHASE 14 MASTER IMPLEMENTATION TEST SUITE (160+ TEST CASES)
     });
 
     it('1.24 GET /api/v1/analytics/orders respects tenant authentication token', async () => {
-      const res = await request(app).get('/api/v1/analytics/orders').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/orders').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
       expect(res.body.data.tenantId).toBe(tenantA);
     });
 
     it('1.25 GET /api/v1/analytics/shipping respects tenant authentication token', async () => {
-      const res = await request(app).get('/api/v1/analytics/shipping').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/shipping').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
       expect(res.body.data.tenantId).toBe(tenantA);
     });
@@ -278,36 +295,36 @@ describe('SELLZY — PHASE 14 MASTER IMPLEMENTATION TEST SUITE (160+ TEST CASES)
   // --------------------------------------------------------------------------
   describe('2. RBAC Permission Checks', () => {
     it('2.1 Request missing analytics.view returns 403 Forbidden', async () => {
-      const res = await request(app).get('/api/v1/analytics/overview').set('Authorization', `Bearer ${tokenRestricted}`);
+      const res = await request(app).get('/api/v1/analytics/overview').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA);
       expect(res.status).toBe(403);
       expect(res.body.error.message).toMatch(/Permission analytics.view required/);
     });
 
     it('2.2 Request missing analytics.sales.view returns 403 Forbidden', async () => {
-      const res = await request(app).get('/api/v1/analytics/sales').set('Authorization', `Bearer ${tokenRestricted}`);
+      const res = await request(app).get('/api/v1/analytics/sales').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA);
       expect(res.status).toBe(403);
       expect(res.body.error.message).toMatch(/Permission analytics.sales.view required/);
     });
 
     it('2.3 Request missing analytics.profit.view returns 403 Forbidden', async () => {
-      const res = await request(app).get('/api/v1/analytics/profit').set('Authorization', `Bearer ${tokenRestricted}`);
+      const res = await request(app).get('/api/v1/analytics/profit').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA);
       expect(res.status).toBe(403);
     });
 
     it('2.4 Request missing analytics.export returns 403 Forbidden', async () => {
-      const res = await request(app).post('/api/v1/analytics/exports').set('Authorization', `Bearer ${tokenRestricted}`).send({ reportType: 'SALES', format: 'CSV' });
+      const res = await request(app).post('/api/v1/analytics/exports').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA).send({ reportType: 'SALES', format: 'CSV' });
       expect(res.status).toBe(403);
     });
 
     it('2.5 Request missing analytics.reports.create returns 403 Forbidden', async () => {
-      const res = await request(app).post('/api/v1/analytics/reports').set('Authorization', `Bearer ${tokenRestricted}`).send({ name: 'R', reportType: 'SALES', metrics: ['gross_sales'] });
+      const res = await request(app).post('/api/v1/analytics/reports').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA).send({ name: 'R', reportType: 'SALES', metrics: ['gross_sales'] });
       expect(res.status).toBe(403);
     });
 
     it('2.6 Authorized Owner token grants access to /api/v1/analytics/sales', async () => {
       jest.spyOn(OrderModel, 'aggregate').mockResolvedValue([]);
       jest.spyOn(RefundModel, 'aggregate').mockResolvedValue([]);
-      const res = await request(app).get('/api/v1/analytics/sales').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/sales').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
     });
 
@@ -317,94 +334,94 @@ describe('SELLZY — PHASE 14 MASTER IMPLEMENTATION TEST SUITE (160+ TEST CASES)
       jest.spyOn(VendorLedgerEntryModel, 'aggregate').mockResolvedValue([]);
       jest.spyOn(ShipmentModel, 'aggregate').mockResolvedValue([]);
 
-      const res = await request(app).get('/api/v1/analytics/profit').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/profit').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
     });
 
     it('2.8 Authorized Owner token grants access to /api/v1/analytics/customers', async () => {
       jest.spyOn(CustomerModel, 'countDocuments').mockResolvedValue(0);
       jest.spyOn(CustomerModel, 'aggregate').mockResolvedValue([]);
-      const res = await request(app).get('/api/v1/analytics/customers').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/customers').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
     });
 
     it('2.9 Authorized Owner token grants access to /api/v1/analytics/vendors', async () => {
       jest.spyOn(VendorLedgerEntryModel, 'aggregate').mockResolvedValue([]);
       jest.spyOn(PurchaseOrderModel, 'aggregate').mockResolvedValue([]);
-      const res = await request(app).get('/api/v1/analytics/vendors').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/vendors').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
     });
 
     it('2.10 Authorized Owner token grants access to create saved report', async () => {
       const mockSaved = { _id: 'rep_1', name: 'My Rep', reportType: 'SALES' };
       jest.spyOn(SavedReportModel, 'create').mockResolvedValue(mockSaved as any);
-      const res = await request(app).post('/api/v1/analytics/reports').set('Authorization', `Bearer ${tokenAdminA}`).send({ name: 'My Rep', reportType: 'SALES', metrics: ['gross_sales'] });
+      const res = await request(app).post('/api/v1/analytics/reports').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA).send({ name: 'My Rep', reportType: 'SALES', metrics: ['gross_sales'] });
       expect(res.status).toBe(201);
     });
 
     it('2.11 GET /api/v1/analytics/orders blocks unauthorized user with 403', async () => {
-      const res = await request(app).get('/api/v1/analytics/orders').set('Authorization', `Bearer ${tokenRestricted}`);
+      const res = await request(app).get('/api/v1/analytics/orders').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA);
       expect(res.status).toBe(403);
     });
 
     it('2.12 GET /api/v1/analytics/products blocks unauthorized user with 403', async () => {
-      const res = await request(app).get('/api/v1/analytics/products').set('Authorization', `Bearer ${tokenRestricted}`);
+      const res = await request(app).get('/api/v1/analytics/products').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA);
       expect(res.status).toBe(403);
     });
 
     it('2.13 GET /api/v1/analytics/customers blocks unauthorized user with 403', async () => {
-      const res = await request(app).get('/api/v1/analytics/customers').set('Authorization', `Bearer ${tokenRestricted}`);
+      const res = await request(app).get('/api/v1/analytics/customers').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA);
       expect(res.status).toBe(403);
     });
 
     it('2.14 GET /api/v1/analytics/vendors blocks unauthorized user with 403', async () => {
-      const res = await request(app).get('/api/v1/analytics/vendors').set('Authorization', `Bearer ${tokenRestricted}`);
+      const res = await request(app).get('/api/v1/analytics/vendors').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA);
       expect(res.status).toBe(403);
     });
 
     it('2.15 GET /api/v1/analytics/payments blocks unauthorized user with 403', async () => {
-      const res = await request(app).get('/api/v1/analytics/payments').set('Authorization', `Bearer ${tokenRestricted}`);
+      const res = await request(app).get('/api/v1/analytics/payments').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA);
       expect(res.status).toBe(403);
     });
 
     it('2.16 GET /api/v1/analytics/shipping blocks unauthorized user with 403', async () => {
-      const res = await request(app).get('/api/v1/analytics/shipping').set('Authorization', `Bearer ${tokenRestricted}`);
+      const res = await request(app).get('/api/v1/analytics/shipping').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA);
       expect(res.status).toBe(403);
     });
 
     it('2.17 GET /api/v1/analytics/marketing blocks unauthorized user with 403', async () => {
-      const res = await request(app).get('/api/v1/analytics/marketing').set('Authorization', `Bearer ${tokenRestricted}`);
+      const res = await request(app).get('/api/v1/analytics/marketing').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA);
       expect(res.status).toBe(403);
     });
 
     it('2.18 GET /api/v1/analytics/automation blocks unauthorized user with 403', async () => {
-      const res = await request(app).get('/api/v1/analytics/automation').set('Authorization', `Bearer ${tokenRestricted}`);
+      const res = await request(app).get('/api/v1/analytics/automation').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA);
       expect(res.status).toBe(403);
     });
 
     it('2.19 GET /api/v1/analytics/metrics blocks unauthorized user with 403', async () => {
-      const res = await request(app).get('/api/v1/analytics/metrics').set('Authorization', `Bearer ${tokenRestricted}`);
+      const res = await request(app).get('/api/v1/analytics/metrics').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA);
       expect(res.status).toBe(403);
     });
 
     it('2.20 GET /api/v1/analytics/exports/job_123 blocks unauthorized user with 403', async () => {
-      const res = await request(app).get('/api/v1/analytics/exports/job_123').set('Authorization', `Bearer ${tokenRestricted}`);
+      const res = await request(app).get('/api/v1/analytics/exports/job_123').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', storeA);
       expect(res.status).toBe(403);
     });
 
     it('2.21 Authorized user can fetch metrics list via API', async () => {
-      const res = await request(app).get('/api/v1/analytics/metrics').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/metrics').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
       expect(res.body.metrics.length).toBeGreaterThan(0);
     });
 
     it('2.22 Authorized user can fetch marketing analytics via API', async () => {
-      const res = await request(app).get('/api/v1/analytics/marketing').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/marketing').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
     });
 
     it('2.23 Authorized user can fetch automation analytics via API', async () => {
-      const res = await request(app).get('/api/v1/analytics/automation').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/automation').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
     });
 
@@ -838,7 +855,7 @@ describe('SELLZY — PHASE 14 MASTER IMPLEMENTATION TEST SUITE (160+ TEST CASES)
       jest.spyOn(ProductModel, 'countDocuments').mockResolvedValue(10);
       jest.spyOn(InventoryModel, 'aggregate').mockResolvedValue([]);
 
-      const res = await request(app).get('/api/v1/analytics/products').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/products').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
       expect(res.body.data.totalProducts).toBe(10);
     });
@@ -847,7 +864,7 @@ describe('SELLZY — PHASE 14 MASTER IMPLEMENTATION TEST SUITE (160+ TEST CASES)
       jest.spyOn(PaymentModel, 'countDocuments').mockResolvedValue(0);
       jest.spyOn(RefundModel, 'countDocuments').mockResolvedValue(0);
 
-      const res = await request(app).get('/api/v1/analytics/payments').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/payments').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
       expect(res.body.data.totalPaymentAttempts).toBe(0);
     });
@@ -879,42 +896,43 @@ describe('SELLZY — PHASE 14 MASTER IMPLEMENTATION TEST SUITE (160+ TEST CASES)
 
     it('5.15 GET /api/v1/analytics/sales with filter query params passes options to service', async () => {
       const spy = jest.spyOn(OrderModel, 'aggregate').mockResolvedValue([]);
-      await request(app).get('/api/v1/analytics/sales?currency=EUR').set('Authorization', `Bearer ${tokenAdminA}`);
+      await request(app).get('/api/v1/analytics/sales?currency=EUR').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(spy).toHaveBeenCalledWith(expect.arrayContaining([{ $match: expect.objectContaining({ currency: 'EUR' }) }]));
     });
 
     it('5.16 GET /api/v1/analytics/profit returns 200 with structured data', async () => {
-      const res = await request(app).get('/api/v1/analytics/profit').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/profit').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
       expect(res.body.data.netSalesMinor).toBeDefined();
     });
 
     it('5.17 GET /api/v1/analytics/customers returns 200 with structured data', async () => {
-      const res = await request(app).get('/api/v1/analytics/customers').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/customers').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
       expect(res.body.data.totalCustomers).toBeDefined();
     });
 
     it('5.18 GET /api/v1/analytics/vendors returns 200 with structured data', async () => {
-      const res = await request(app).get('/api/v1/analytics/vendors').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/vendors').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
       expect(res.body.data.outstandingPayableMinor).toBeDefined();
     });
 
     it('5.19 GET /api/v1/analytics/shipping returns 200 with structured data', async () => {
-      const res = await request(app).get('/api/v1/analytics/shipping').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/shipping').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
+      if (res.status !== 200) console.log('BODY:', res.body);
       expect(res.status).toBe(200);
       expect(res.body.data.rtoCount).toBeDefined();
     });
 
     it('5.20 GET /api/v1/analytics/marketing returns 200 with structured data', async () => {
-      const res = await request(app).get('/api/v1/analytics/marketing').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/marketing').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
       expect(res.body.data.totalCampaigns).toBeDefined();
     });
 
     it('5.21 GET /api/v1/analytics/automation returns 200 with structured data', async () => {
-      const res = await request(app).get('/api/v1/analytics/automation').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/automation').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
       expect(res.body.data.automationSuccessRate).toBeDefined();
     });
@@ -924,7 +942,7 @@ describe('SELLZY — PHASE 14 MASTER IMPLEMENTATION TEST SUITE (160+ TEST CASES)
       jest.spyOn(AnalyticsExportJobModel, 'create').mockResolvedValue(mockJob as any);
       jest.spyOn(AnalyticsExportJobModel, 'findById').mockResolvedValue(mockJob as any);
 
-      const res = await request(app).post('/api/v1/analytics/exports').set('Authorization', `Bearer ${tokenAdminA}`).send({ reportType: 'SALES', format: 'CSV' });
+      const res = await request(app).post('/api/v1/analytics/exports').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA).send({ reportType: 'SALES', format: 'CSV' });
       expect(res.status).toBe(202);
       expect(res.body.job).toBeDefined();
     });
@@ -933,7 +951,7 @@ describe('SELLZY — PHASE 14 MASTER IMPLEMENTATION TEST SUITE (160+ TEST CASES)
       const mockSaved = { _id: 'rep_post', name: 'Sales Overview', reportType: 'SALES' };
       jest.spyOn(SavedReportModel, 'create').mockResolvedValue(mockSaved as any);
 
-      const res = await request(app).post('/api/v1/analytics/reports').set('Authorization', `Bearer ${tokenAdminA}`).send({ name: 'Sales Overview', reportType: 'SALES', metrics: ['gross_sales'] });
+      const res = await request(app).post('/api/v1/analytics/reports').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA).send({ name: 'Sales Overview', reportType: 'SALES', metrics: ['gross_sales'] });
       expect(res.status).toBe(201);
       expect(res.body.report).toBeDefined();
     });
@@ -1117,22 +1135,23 @@ describe('SELLZY — PHASE 14 MASTER IMPLEMENTATION TEST SUITE (160+ TEST CASES)
     });
 
     it('6.26 GET /api/v1/analytics/returns returns 200 OK', async () => {
-      const res = await request(app).get('/api/v1/analytics/returns').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/returns').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
+      if (res.status !== 200) console.log('BODY 6.26:', res.body);
       expect(res.status).toBe(200);
     });
 
     it('6.27 GET /api/v1/analytics/exceptions returns 200 OK', async () => {
-      const res = await request(app).get('/api/v1/analytics/exceptions').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/exceptions').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
     });
 
     it('6.28 GET /api/v1/analytics/procurement returns 200 OK', async () => {
-      const res = await request(app).get('/api/v1/analytics/procurement').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/procurement').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
     });
 
     it('6.29 GET /api/v1/analytics/inventory returns 200 OK', async () => {
-      const res = await request(app).get('/api/v1/analytics/inventory').set('Authorization', `Bearer ${tokenAdminA}`);
+      const res = await request(app).get('/api/v1/analytics/inventory').set('Authorization', `Bearer ${tokenAdminA}`).set('x-store-id', storeA);
       expect(res.status).toBe(200);
     });
 

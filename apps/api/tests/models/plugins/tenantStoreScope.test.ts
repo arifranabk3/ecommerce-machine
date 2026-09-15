@@ -27,6 +27,8 @@ describe('tenantStoreScopePlugin', () => {
   });
 
   it('should throw an error when querying without a context', async () => {
+    const oldEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
     await expect(TestModel.find({})).rejects.toThrow(/without active execution context/);
   });
 

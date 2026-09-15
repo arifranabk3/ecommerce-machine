@@ -19,6 +19,7 @@ import { AnalyticsCacheService } from './AnalyticsCacheService';
 export interface IAnalyticsFilterOptions {
   startDate?: Date;
   endDate?: Date;
+  storeId?: string;
   productId?: string;
   vendorId?: string;
   customerId?: string;
@@ -48,6 +49,9 @@ export class AnalyticsService {
    */
   private static buildBaseCriteria(tenantId: string, options: IAnalyticsFilterOptions = {}): any {
     const match: any = { tenantId };
+    if (options.storeId) {
+      match.storeId = options.storeId;
+    }
     if (options.startDate || options.endDate) {
       match.createdAt = {};
       if (options.startDate) match.createdAt.$gte = new Date(options.startDate);
@@ -189,8 +193,10 @@ export class AnalyticsService {
   /**
    * Product & Inventory Analytics
    */
-  static async getProductAnalytics(tenantId: string) {
-    const totalProducts = await ProductModel.countDocuments({ tenantId, status: { $ne: 'ARCHIVED' } });
+  static async getProductAnalytics(tenantId: string, options: IAnalyticsFilterOptions = {}) {
+    const match = this.buildBaseCriteria(tenantId, options);
+    match.status = { $ne: 'ARCHIVED' };
+    const totalProducts = await ProductModel.countDocuments(match);
     const stockStats = await InventoryModel.aggregate([
       { $match: { tenantId } },
       {
@@ -219,9 +225,10 @@ export class AnalyticsService {
   /**
    * Customer Cohorts & CRM Analytics
    */
-  static async getCustomerAnalytics(tenantId: string) {
-    const totalCustomers = await CustomerModel.countDocuments({ tenantId });
-    const repeatCustomers = await CustomerModel.countDocuments({ tenantId, totalOrders: { $gt: 1 } });
+  static async getCustomerAnalytics(tenantId: string, options: IAnalyticsFilterOptions = {}) {
+    const match = this.buildBaseCriteria(tenantId, options);
+    const totalCustomers = await CustomerModel.countDocuments(match);
+    const repeatCustomers = await CustomerModel.countDocuments({ ...match, totalOrders: { $gt: 1 } });
 
     const spendStats = await CustomerModel.aggregate([
       { $match: { tenantId } },

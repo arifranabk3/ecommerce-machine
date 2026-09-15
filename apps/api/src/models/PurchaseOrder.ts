@@ -10,7 +10,7 @@ const PurchaseOrderSchema: Schema = new Schema(
     normalizedPoNumber: { type: String, required: true, trim: true },
     vendorId: { type: String, required: true, index: true },
     vendorNameSnapshot: { type: String, required: true, trim: true },
-    destinationLocationId: { type: String, required: true, index: true },
+    destinationWarehouseId: { type: String, required: true, index: true },
     status: {
       type: String,
       enum: Object.values(PurchaseOrderStatus),

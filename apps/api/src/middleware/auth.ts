@@ -5,6 +5,7 @@ import { AppError } from './error';
 import { SessionModel } from '../models/Session';
 import { UserModel } from '../models/User';
 import { RbacService } from '../services/rbac.service';
+import { getContext } from '../utils/context';
 
 export interface AuthenticatedRequest extends Request {
   user?: {
@@ -55,6 +56,16 @@ export async function authenticateToken(req: AuthenticatedRequest, _res: Respons
     req.user = payload;
     (req as any).tenantId = payload.tenantId;
     (req as any).permissions = await RbacService.getEffectivePermissions(payload.userId, payload.tenantId);
+
+    // Populate the active ALS context
+    const context = getContext();
+    if (context) {
+      context.tenantId = payload.tenantId;
+      context.userId = payload.userId;
+      context.roles = payload.roles;
+      context.permissions = (req as any).permissions;
+    }
+
     next();
   } catch (err) {
     return next(new AppError('Invalid or expired authentication token', 401, 'UNAUTHORIZED'));

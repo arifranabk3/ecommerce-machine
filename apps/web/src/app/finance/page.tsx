@@ -15,19 +15,25 @@ import {
   Briefcase
 } from 'lucide-react';
 
-export default function FinancePage() {
-  const kpis = [
-    { title: 'Total Revenue', value: 'PKR 14,500,000', subtitle: 'Year to Date', icon: DollarSign, bg: 'bg-brand-100', color: 'text-brand-600', trend: '+15.2%', isUp: true },
-    { title: 'Total Expenses', value: 'PKR 4,200,000', subtitle: 'Year to Date', icon: CreditCard, bg: 'bg-red-100', color: 'text-red-600', trend: '-2.4%', isUp: false },
-    { title: 'Net Profit', value: 'PKR 10,300,000', subtitle: 'Year to Date', icon: Briefcase, bg: 'bg-emerald-100', color: 'text-emerald-600', trend: '+18.5%', isUp: true },
-  ];
+import { useApiQuery } from '@/lib/api-client';
 
-  const recentTransactions = [
-    { id: 'TRX-1092', date: 'Sep 05, 2026', desc: 'Vendor Payout (Tech Source)', category: 'Cost of Goods Sold', type: 'Expense', amount: '-PKR 125,000' },
-    { id: 'TRX-1091', date: 'Sep 04, 2026', desc: 'Stripe Settlement', category: 'Revenue', type: 'Income', amount: '+PKR 450,000' },
-    { id: 'TRX-1090', date: 'Sep 02, 2026', desc: 'AWS Hosting', category: 'Software', type: 'Expense', amount: '-PKR 85,000' },
-    { id: 'TRX-1089', date: 'Sep 01, 2026', desc: 'Facebook Ads', category: 'Marketing', type: 'Expense', amount: '-PKR 250,000' },
-    { id: 'TRX-1088', date: 'Aug 28, 2026', desc: 'JazzCash Settlement', category: 'Revenue', type: 'Income', amount: '+PKR 180,000' },
+export default function FinancePage() {
+  const { data: financeSummary, isLoading: summaryLoading } = useApiQuery<any>('/api/v1/finance');
+  const { data: transactionsData, isLoading: txLoading } = useApiQuery<any>('/api/v1/finance/transactions?limit=5');
+
+  const transactionsList = transactionsData?.data || [];
+
+  const formatCurrency = (minor: number | undefined) => {
+    if (minor === undefined) return 'PKR 0';
+    return `PKR ${(minor / 100).toLocaleString()}`;
+  };
+
+  const totalExpensesMinor = (financeSummary?.refundsMinor || 0) + (financeSummary?.paymentFeesMinor || 0);
+
+  const kpis = [
+    { title: 'Total Revenue', value: summaryLoading ? '...' : formatCurrency(financeSummary?.grossRevenueMinor), subtitle: 'Year to Date', icon: DollarSign, bg: 'bg-brand-100', color: 'text-brand-600', trend: '+0.0%', isUp: true },
+    { title: 'Total Expenses', value: summaryLoading ? '...' : formatCurrency(totalExpensesMinor), subtitle: 'Year to Date', icon: CreditCard, bg: 'bg-red-100', color: 'text-red-600', trend: '-0.0%', isUp: false },
+    { title: 'Net Collections', value: summaryLoading ? '...' : formatCurrency(financeSummary?.netCollectionsMinor), subtitle: 'Year to Date', icon: Briefcase, bg: 'bg-emerald-100', color: 'text-emerald-600', trend: '+0.0%', isUp: true },
   ];
 
   return (
@@ -204,33 +210,40 @@ export default function FinancePage() {
                 <thead className="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
                   <tr>
                     <th className="px-6 py-4">Transaction ID & Date</th>
-                    <th className="px-6 py-4">Description</th>
-                    <th className="px-6 py-4">Category</th>
+                    <th className="px-6 py-4">Description / Source</th>
+                    <th className="px-6 py-4">Type</th>
                     <th className="px-6 py-4 text-right">Amount</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {recentTransactions.map((trx, i) => (
-                    <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-bold text-slate-900">{trx.id}</div>
-                        <div className="text-[11px] font-semibold text-slate-500 mt-0.5">{trx.date}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-bold text-slate-700">{trx.desc}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded text-xs font-bold">
-                          {trx.category}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className={`font-extrabold ${trx.type === 'Income' ? 'text-emerald-600' : 'text-slate-900'}`}>
-                          {trx.amount}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                  {txLoading ? (
+                    <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-500 font-medium">Loading transactions...</td></tr>
+                  ) : transactionsList.length === 0 ? (
+                    <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-500 font-medium">No recent transactions.</td></tr>
+                  ) : (
+                    transactionsList.map((trx: any, i: number) => (
+                      <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="font-bold text-slate-900">{trx.transactionNumber || trx._id.substring(0,8).toUpperCase()}</div>
+                          <div className="text-[11px] font-semibold text-slate-500 mt-0.5">{new Date(trx.createdAt).toLocaleDateString()}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-bold text-slate-700">{trx.sourceType || 'System'}</div>
+                          <div className="text-[11px] font-semibold text-slate-500 mt-0.5">{trx.sourceId || '-'}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="px-2.5 py-1 bg-slate-100 text-slate-600 rounded text-xs font-bold">
+                            {trx.type}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className={`font-extrabold ${trx.direction === 'CREDIT' ? 'text-emerald-600' : 'text-slate-900'}`}>
+                            {trx.direction === 'CREDIT' ? '+' : '-'}{formatCurrency(trx.amountMinor)}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

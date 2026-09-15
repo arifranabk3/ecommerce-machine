@@ -28,14 +28,14 @@ export class FulfillmentService {
       fulfillment = new FulfillmentModel({
         tenantId,
         orderId,
-        locationId: input.locationId || 'default',
+        locationId: input.warehouseId || 'default', // Map API input warehouseId to DB locationId
         status: input.status as FulfillmentStatus,
         trackingNumber: input.trackingNumber,
         carrierCode: input.carrierCode
       });
     } else {
       if (input.status) fulfillment.status = input.status as FulfillmentStatus;
-      if (input.locationId) fulfillment.locationId = input.locationId;
+      if (input.warehouseId) fulfillment.locationId = input.warehouseId;
       if (input.trackingNumber !== undefined) fulfillment.trackingNumber = input.trackingNumber;
       if (input.carrierCode !== undefined) fulfillment.carrierCode = input.carrierCode;
     }

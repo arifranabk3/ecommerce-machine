@@ -34,7 +34,26 @@ import {
   Cell
 } from 'recharts';
 
+import { useApiQuery } from '@/lib/api-client';
+
 export default function DashboardPage() {
+  const { data: overview, isLoading: overviewLoading } = useApiQuery<any>('/api/v1/analytics/overview');
+  const { data: customersStats } = useApiQuery<any>('/api/v1/analytics/customers');
+  const { data: customersData, isLoading: customersLoading } = useApiQuery<any>('/api/v1/customers?limit=5');
+  const { data: ordersData, isLoading: ordersLoading } = useApiQuery<any>('/api/v1/orders?limit=5');
+  const { data: productsData, isLoading: productsLoading } = useApiQuery<any>('/api/v1/products?limit=5');
+  const { data: inventoryHealth, isLoading: inventoryLoading } = useApiQuery<any>('/api/v1/analytics/inventory');
+  const { data: financeOverview } = useApiQuery<any>('/api/v1/finance');
+
+  const ordersList = ordersData?.data || [];
+  const productsList = productsData?.data || [];
+  const customersList = customersData?.data || [];
+
+  const formatCurrency = (minor: number | undefined) => {
+    if (minor === undefined) return 'Rs 0';
+    return `Rs ${(minor / 100).toLocaleString()}`;
+  };
+
   const chartData = [
     { name: 'Oct 12', revenue: 200000, previous: 150000 },
     { name: 'Oct 14', revenue: 280000, previous: 190000 },
@@ -45,12 +64,12 @@ export default function DashboardPage() {
     { name: 'Oct 24', revenue: 310000, previous: 300000 },
   ];
 
-  const inventoryData = [
-    { name: 'In Stock', value: 850, color: '#10B981' },
-    { name: 'Low Stock', value: 180, color: '#F59E0B' },
-    { name: 'Out of Stock', value: 86, color: '#EF4444' },
-    { name: 'Reserved', value: 124, color: '#98A2B3' },
-  ];
+  const inventoryData = inventoryHealth ? [
+    { name: 'Available', value: inventoryHealth.totalAvailableStock || 0, color: '#10B981' },
+    { name: 'Reserved', value: inventoryHealth.totalReservedStock || 0, color: '#F59E0B' },
+  ] : [];
+  
+  const totalInventoryItems = inventoryHealth?.totalOnHandStock || 0;
 
   return (
     <DashboardLayout>
@@ -78,11 +97,11 @@ export default function DashboardPage() {
         {/* High-Level KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {[
-            { label: 'Revenue', value: 'Rs 1,284,320', trend: '+18.4%', up: true, icon: TrendingUp, color: 'text-brand-600', bg: 'bg-brand-50' },
-            { label: 'Orders', value: '1,248', trend: '+4.2%', up: true, icon: ShoppingBag, color: 'text-accent', bg: 'bg-accent-subtle' },
-            { label: 'Customers', value: '842', trend: '+12.1%', up: true, icon: Users, color: 'text-teal-600', bg: 'bg-teal-50' },
-            { label: 'Conversion Rate', value: '3.2%', trend: '+0.8%', up: true, icon: Activity, color: 'text-pink-600', bg: 'bg-pink-50' },
-            { label: 'Average Order Value', value: 'Rs 1,029', trend: '-1.4%', up: false, icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-50' },
+            { label: 'Revenue', value: overviewLoading ? '...' : formatCurrency(overview?.netSalesMinor), trend: '+0.0%', up: true, icon: TrendingUp, color: 'text-brand-600', bg: 'bg-brand-50' },
+            { label: 'Orders', value: overviewLoading ? '...' : (overview?.totalOrders?.toLocaleString() || '0'), trend: '+0.0%', up: true, icon: ShoppingBag, color: 'text-accent', bg: 'bg-accent-subtle' },
+            { label: 'Customers', value: customersStats === undefined ? '...' : (customersStats?.totalCustomers?.toLocaleString() || '0'), trend: '+0.0%', up: true, icon: Users, color: 'text-teal-600', bg: 'bg-teal-50' },
+            { label: 'Delivery Success', value: overviewLoading ? '...' : `${overview?.deliverySuccessRate || 0}%`, trend: '+0.0%', up: true, icon: CheckCircle2, color: 'text-pink-600', bg: 'bg-pink-50' },
+            { label: 'Average Order Value', value: overviewLoading ? '...' : formatCurrency(overview?.aovMinor), trend: '+0.0%', up: true, icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-50' },
           ].map((stat, i) => (
             <Card key={i} className="hover:border-border-subtle hover:shadow-premium-hover transition-all duration-300 rounded-2xl">
               <CardContent className="p-5 flex flex-col h-full justify-between">
@@ -218,31 +237,36 @@ export default function DashboardPage() {
                   </button>
                 </div>
                 <div className="divide-y divide-border flex-1 overflow-hidden">
-                  {[
-                    { id: 'SZ-10283', items: 2, amount: '5,420', status: 'Paid', statusColor: 'bg-success-subtle text-success-text', time: '2m ago' },
-                    { id: 'SZ-10282', items: 1, amount: '2,199', status: 'Processing', statusColor: 'bg-brand-50 text-brand-600', time: '18m ago' },
-                    { id: 'SZ-10281', items: 3, amount: '8,990', status: 'Shipped', statusColor: 'bg-accent-subtle text-accent-hover', time: '1h ago' },
-                    { id: 'SZ-10280', items: 1, amount: '1,750', status: 'Pending', statusColor: 'bg-warning-subtle text-warning-text', time: '2h ago' },
-                    { id: 'SZ-10279', items: 4, amount: '12,490', status: 'Processing', statusColor: 'bg-brand-50 text-brand-600', time: '3h ago' },
-                  ].map((order, i) => (
-                    <div key={i} className="p-4 flex items-center justify-between hover:bg-surface-hover transition-colors cursor-pointer group">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-surface-secondary flex items-center justify-center border border-border shadow-sm group-hover:border-border-subtle transition-colors shrink-0">
-                          <ImageIcon className="w-4 h-4 text-content-muted" />
+                  {ordersLoading ? (
+                    <div className="p-8 text-center text-content-muted text-sm font-medium">Loading orders...</div>
+                  ) : ordersList?.length === 0 ? (
+                    <div className="p-8 text-center text-content-muted text-sm font-medium">No recent orders found.</div>
+                  ) : (
+                    ordersList?.map((order: any, i: number) => (
+                      <div key={i} className="p-4 flex items-center justify-between hover:bg-surface-hover transition-colors cursor-pointer group">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-surface-secondary flex items-center justify-center border border-border shadow-sm group-hover:border-border-subtle transition-colors shrink-0">
+                            <ImageIcon className="w-4 h-4 text-content-muted" />
+                          </div>
+                          <div>
+                            <div className="text-[13px] font-bold text-content-primary">#{order.orderNumber || order._id.substring(0,8).toUpperCase()}</div>
+                            <div className="text-[11px] text-content-secondary mt-0.5 font-medium">{order.itemCount} {order.itemCount === 1 ? 'item' : 'items'} · {formatCurrency(order.totalMinor)}</div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="text-[13px] font-bold text-content-primary">#{order.id}</div>
-                          <div className="text-[11px] text-content-secondary mt-0.5 font-medium">{order.items} {order.items === 1 ? 'item' : 'items'} · Rs {order.amount}</div>
+                        <div className="text-right flex flex-col items-end">
+                          <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider mb-1 ${
+                            order.status === 'PAID' || order.status === 'COMPLETED' ? 'bg-success-subtle text-success-text' : 
+                            order.status === 'PROCESSING' || order.status === 'CONFIRMED' ? 'bg-brand-50 text-brand-600' :
+                            order.status === 'SHIPPED' ? 'bg-accent-subtle text-accent-hover' : 
+                            'bg-warning-subtle text-warning-text'
+                          }`}>
+                            {order.status}
+                          </span>
+                          <div className="text-[11px] font-medium text-content-muted">Recent</div>
                         </div>
                       </div>
-                      <div className="text-right flex flex-col items-end">
-                        <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider mb-1 ${order.statusColor}`}>
-                          {order.status}
-                        </span>
-                        <div className="text-[11px] font-medium text-content-muted">{order.time}</div>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -268,30 +292,30 @@ export default function DashboardPage() {
                     <tr className="border-b border-border bg-surface-secondary/50">
                       <th className="py-2.5 px-4 text-[11px] font-bold text-content-secondary uppercase tracking-wider">#</th>
                       <th className="py-2.5 px-4 text-[11px] font-bold text-content-secondary uppercase tracking-wider">Product</th>
-                      <th className="py-2.5 px-4 text-[11px] font-bold text-content-secondary uppercase tracking-wider">Sales</th>
-                      <th className="py-2.5 px-4 text-[11px] font-bold text-content-secondary uppercase tracking-wider text-right">Revenue</th>
+                      <th className="py-2.5 px-4 text-[11px] font-bold text-content-secondary uppercase tracking-wider">Status</th>
+                      <th className="py-2.5 px-4 text-[11px] font-bold text-content-secondary uppercase tracking-wider text-right">Price</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {[
-                      { name: 'Classic White T-Shirt', sales: 420, revenue: '840,000' },
-                      { name: 'Premium Hoodie', sales: 312, revenue: '1,560,000' },
-                      { name: 'Casual Sneakers', sales: 245, revenue: '1,225,000' },
-                      { name: 'Denim Jacket', sales: 189, revenue: '945,000' },
-                      { name: 'Leather Wallet', sales: 154, revenue: '385,000' }
-                    ].map((product, i) => (
-                      <tr key={i} className="hover:bg-surface-hover transition-colors">
-                        <td className="py-3 px-4 text-[13px] font-bold text-content-muted">{i + 1}</td>
-                        <td className="py-3 px-4 flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-surface-secondary border border-border shrink-0 flex items-center justify-center">
-                            <ImageIcon className="w-3 h-3 text-content-muted" />
-                          </div>
-                          <span className="text-[13px] font-bold text-content-primary truncate">{product.name}</span>
-                        </td>
-                        <td className="py-3 px-4 text-[13px] font-medium text-content-secondary">{product.sales}</td>
-                        <td className="py-3 px-4 text-[13px] font-bold text-content-primary text-right">Rs {product.revenue}</td>
-                      </tr>
-                    ))}
+                    {productsLoading ? (
+                      <tr><td colSpan={4} className="py-8 text-center text-content-muted text-sm font-medium">Loading products...</td></tr>
+                    ) : productsList?.length === 0 ? (
+                      <tr><td colSpan={4} className="py-8 text-center text-content-muted text-sm font-medium">No products found.</td></tr>
+                    ) : (
+                      productsList?.map((product: any, i: number) => (
+                        <tr key={i} className="hover:bg-surface-hover transition-colors">
+                          <td className="py-3 px-4 text-[13px] font-bold text-content-muted">{i + 1}</td>
+                          <td className="py-3 px-4 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-surface-secondary border border-border shrink-0 flex items-center justify-center">
+                              <ImageIcon className="w-3 h-3 text-content-muted" />
+                            </div>
+                            <span className="text-[13px] font-bold text-content-primary truncate max-w-[120px] sm:max-w-xs">{product.name}</span>
+                          </td>
+                          <td className="py-3 px-4 text-[13px] font-medium text-content-secondary">{product.status}</td>
+                          <td className="py-3 px-4 text-[13px] font-bold text-content-primary text-right">{formatCurrency(product.priceMinor)}</td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -330,7 +354,7 @@ export default function DashboardPage() {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-2xl font-extrabold text-content-primary leading-none">1,240</span>
+                    <span className="text-2xl font-extrabold text-content-primary leading-none">{totalInventoryItems.toLocaleString()}</span>
                     <span className="text-[11px] font-bold text-content-secondary uppercase tracking-wider mt-1">Total Items</span>
                   </div>
                 </div>
@@ -339,29 +363,26 @@ export default function DashboardPage() {
                   {inventoryData.map((item, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></div>
-                      <span className="text-[12px] font-medium text-content-secondary">{item.name}</span>
+                      <span className="text-[12px] font-medium text-content-secondary">{item.name}: {item.value}</span>
                     </div>
                   ))}
                 </div>
               </div>
               
-              <div className="p-4 bg-danger-subtle border-t border-danger/10 flex justify-between items-center shrink-0">
+              <div className="p-4 bg-surface-secondary border-t border-border flex justify-between items-center shrink-0">
                 <div className="flex items-center gap-2">
-                  <Box className="w-4 h-4 text-danger-text" />
-                  <span className="text-[13px] font-bold text-danger-text">86 products are out of stock</span>
+                  <Box className="w-4 h-4 text-content-secondary" />
+                  <span className="text-[13px] font-bold text-content-secondary">Total Value: {formatCurrency(inventoryHealth?.totalInventoryValueMinor)}</span>
                 </div>
-                <button className="text-[12px] font-bold text-danger-text hover:text-danger flex items-center gap-1 group">
-                  View <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                </button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Customer Activity */}
+          {/* Recent Customers */}
           <Card className="rounded-2xl flex flex-col h-[400px]">
             <CardContent className="p-0 flex flex-col h-full">
               <div className="p-5 border-b border-border flex justify-between items-center shrink-0">
-                <h3 className="text-base font-bold text-content-primary">Customer Activity</h3>
+                <h3 className="text-base font-bold text-content-primary">Recent Customers</h3>
                 <button className="text-[13px] font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1 group">
                   View all <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </button>
@@ -369,28 +390,31 @@ export default function DashboardPage() {
               <div className="flex-1 overflow-auto p-5">
                 <div className="relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
                   <div className="space-y-6">
-                    {[
-                      { name: 'Fatima Khan', action: 'Placed a new order', time: '10m ago', init: 'FK' },
-                      { name: 'Ali Raza', action: 'Signed up', time: '45m ago', init: 'AR' },
-                      { name: 'Sara Ahmed', action: 'Placed a new order', time: '1h ago', init: 'SA' },
-                      { name: 'Usman Tariq', action: 'Added 3 items to cart', time: '2h ago', init: 'UT' },
-                      { name: 'Ayesha Siddiqui', action: 'Signed up', time: '4h ago', init: 'AS' },
-                    ].map((activity, i) => (
-                      <div key={i} className="relative flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-surface-secondary border border-border flex items-center justify-center shadow-sm z-10 shrink-0 relative">
-                            <span className="text-[12px] font-bold text-content-primary">{activity.init}</span>
+                    {customersLoading ? (
+                      <div className="p-8 text-center text-content-muted text-sm font-medium">Loading customers...</div>
+                    ) : customersList?.length === 0 ? (
+                      <div className="p-8 text-center text-content-muted text-sm font-medium">No customers found.</div>
+                    ) : (
+                      customersList?.map((customer: any, i: number) => {
+                        const init = customer.firstName ? customer.firstName.substring(0, 1) + (customer.lastName ? customer.lastName.substring(0, 1) : '') : 'CU';
+                        return (
+                          <div key={i} className="relative flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-full bg-surface-secondary border border-border flex items-center justify-center shadow-sm z-10 shrink-0 relative">
+                                <span className="text-[12px] font-bold text-content-primary uppercase">{init}</span>
+                              </div>
+                              <div>
+                                <p className="text-[13px] font-bold text-content-primary leading-tight">{customer.firstName} {customer.lastName}</p>
+                                <p className="text-[12px] text-content-secondary mt-0.5">{customer.email}</p>
+                              </div>
+                            </div>
+                            <div className="text-[11px] font-bold text-content-muted whitespace-nowrap ml-4">
+                              {new Date(customer.createdAt).toLocaleDateString()}
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-[13px] font-bold text-content-primary leading-tight">{activity.name}</p>
-                            <p className="text-[12px] text-content-secondary mt-0.5">{activity.action}</p>
-                          </div>
-                        </div>
-                        <div className="text-[11px] font-bold text-content-muted whitespace-nowrap ml-4">
-                          {activity.time}
-                        </div>
-                      </div>
-                    ))}
+                        );
+                      })
+                    )}
                   </div>
                 </div>
               </div>

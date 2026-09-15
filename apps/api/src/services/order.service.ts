@@ -179,7 +179,7 @@ export class OrderService {
           {
             productId: resItem.productId,
             variantId: resItem.variantId,
-            warehouseId: (input as any).locationId,
+            warehouseId: input.warehouseId,
             quantity: resItem.quantity,
             referenceType: 'ORDER',
             referenceId: normalizedOrderNumber,
