@@ -446,6 +446,69 @@ export class InventoryService {
     return items;
   }
 
+  static async getAllInventory(tenantId: string, filters: { productId?: string; warehouseId?: string; status?: string; search?: string; page?: number; limit?: number }) {
+    const page = Math.max(1, filters.page || 1);
+    const limit = Math.min(100, Math.max(1, filters.limit || 20));
+    const skip = (page - 1) * limit;
+
+    const query: Record<string, unknown> = { tenantId };
+    if (filters.productId) query.productId = filters.productId;
+    if (filters.warehouseId) query.warehouseId = filters.warehouseId;
+    
+    // Status filters based on logic
+    if (filters.status === 'OUT_OF_STOCK') {
+      query.quantityAvailable = { $lte: 0 };
+    }
+
+    const [items, total] = await Promise.all([
+      InventoryModel.find(query)
+        .sort({ updatedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      InventoryModel.countDocuments(query)
+    ]);
+
+    // To provide a rich list, we can manually populate product and warehouse info,
+    // or rely on the frontend to fetch it. Since the frontend table needs product name and SKU,
+    // let's fetch them here to attach to the response.
+    const productIds = [...new Set(items.map(i => i.productId))];
+    const warehouseIds = [...new Set(items.map(i => i.warehouseId))];
+
+    const [products, warehouses] = await Promise.all([
+      ProductModel.find({ tenantId, _id: { $in: productIds } }).lean(),
+      WarehouseModel.find({ tenantId, _id: { $in: warehouseIds } }).lean()
+    ]);
+
+    const productMap = new Map(products.map(p => [p._id.toString(), p]));
+    const warehouseMap = new Map(warehouses.map(w => [w._id.toString(), w]));
+
+    const enrichedItems = items.map(item => {
+      const product = productMap.get(item.productId.toString());
+      const warehouse = warehouseMap.get(item.warehouseId.toString());
+      
+      let stockStatus = 'In Stock';
+      if (item.quantityAvailable <= 0) stockStatus = 'Out of Stock';
+      else if (item.quantityAvailable <= item.reorderPoint) stockStatus = 'Low Stock';
+
+      return {
+        ...item,
+        productName: product?.name || 'Unknown Product',
+        productSku: product?.sku || 'UNKNOWN',
+        warehouseName: warehouse?.name || 'Unknown Warehouse',
+        status: stockStatus
+      };
+    });
+
+    return { 
+      items: enrichedItems, 
+      total, 
+      page, 
+      limit, 
+      totalPages: Math.ceil(total / limit) 
+    };
+  }
+
   static async getInventoryMovements(tenantId: string, filters: { productId?: string; warehouseId?: string; page?: number; limit?: number }) {
     const page = Math.max(1, filters.page || 1);
     const limit = Math.min(100, Math.max(1, filters.limit || 20));

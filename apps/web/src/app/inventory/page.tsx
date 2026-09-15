@@ -1,29 +1,27 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Table, Thead, Tbody, Tr, Th, Td } from '@/components/ui/Table';
 import { 
-  Box, 
   MapPin, 
   Search, 
   Filter,
   ArrowRightLeft,
   Download,
-  AlertTriangle,
-  ChevronDown,
-  Truck
+  ChevronDown
 } from 'lucide-react';
+import { useApiQuery } from '@/lib/api-client';
 
 export default function InventoryPage() {
-  const mockInventory = [
-    { id: '1', product: 'AirMax Pro Wireless', sku: 'AUDIO-001', available: 142, reserved: 15, incoming: 50, location: 'US East Warehouse', status: 'In Stock' },
-    { id: '2', product: 'Minimalist Desk Mat', sku: 'OFFICE-082', available: 890, reserved: 45, incoming: 0, location: 'Global Fulfillment', status: 'In Stock' },
-    { id: '3', product: 'Ergo Chair V2', sku: 'FURN-014', available: 12, reserved: 8, incoming: 20, location: 'EU Central', status: 'Low Stock' },
-    { id: '4', product: 'Studio Microphone', sku: 'AUDIO-045', available: 0, reserved: 0, incoming: 100, location: 'US West', status: 'Out of Stock' },
-    { id: '5', product: 'Mechanical Keyboard', sku: 'TECH-112', available: 45, reserved: 12, incoming: 0, location: 'Global Fulfillment', status: 'In Stock' },
-  ];
+  const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const { data, isLoading, error } = useApiQuery<{ items: any[], total: number, totalPages: number }>(`/api/v1/inventory?page=${page}&limit=20${searchTerm ? `&search=${searchTerm}` : ''}`);
+
+  const inventory = data?.items || [];
+  const total = data?.total || 0;
+  const totalPages = data?.totalPages || 1;
 
   return (
     <DashboardLayout>
@@ -45,29 +43,6 @@ export default function InventoryPage() {
           </div>
         </div>
 
-        {/* Top KPIs */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[
-            { title: 'Total Available', value: '18,492', sub: 'Units across all locations', icon: Box, color: 'text-brand-600', bg: 'bg-brand-50' },
-            { title: 'Low Stock Alerts', value: '24', sub: 'SKUs below threshold', icon: AlertTriangle, color: 'text-warning-text', bg: 'bg-warning-subtle' },
-            { title: 'Out of Stock', value: '8', sub: 'SKUs with 0 inventory', icon: AlertTriangle, color: 'text-danger-text', bg: 'bg-danger-subtle' },
-            { title: 'Incoming', value: '1,450', sub: 'Units from purchase orders', icon: Truck, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-          ].map((kpi, i) => (
-            <div key={i} className="bg-surface rounded-xl p-6 border border-border shadow-sm flex flex-col justify-between hover:shadow-premium transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-[11px] font-bold text-content-muted uppercase tracking-widest">{kpi.title}</h3>
-                <div className={`p-1.5 rounded-lg ${kpi.bg}`}>
-                  <kpi.icon className={`w-4 h-4 ${kpi.color}`} />
-                </div>
-              </div>
-              <div>
-                <div className="text-2xl font-bold text-content-primary mb-1 tracking-tight">{kpi.value}</div>
-                <div className="text-[10px] font-medium text-content-secondary uppercase tracking-wider">{kpi.sub}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
         {/* Toolbar */}
         <div className="flex flex-col md:flex-row justify-between gap-4 bg-surface rounded-xl border border-border p-2 shadow-sm">
           <div className="flex-1 max-w-md relative">
@@ -76,6 +51,11 @@ export default function InventoryPage() {
               type="text"
               placeholder="Search by SKU or product name..."
               className="w-full pl-9 pr-4 py-2 bg-transparent text-sm text-content-primary placeholder-content-muted border-none focus:ring-0 focus:outline-none"
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1);
+              }}
             />
           </div>
           <div className="flex items-center gap-2">
@@ -99,29 +79,33 @@ export default function InventoryPage() {
                 <Th>Location</Th>
                 <Th className="text-right">Available</Th>
                 <Th className="text-right">Reserved</Th>
-                <Th className="text-right">Incoming</Th>
                 <Th>Status</Th>
               </tr>
             </Thead>
             <Tbody>
-              {mockInventory.map((item) => (
-                <Tr key={item.id}>
+              {isLoading ? (
+                <Tr><Td colSpan={5} className="text-center py-8 text-content-muted">Loading inventory...</Td></Tr>
+              ) : error ? (
+                <Tr><Td colSpan={5} className="text-center py-8 text-danger-text">Failed to load inventory. {error.message}</Td></Tr>
+              ) : inventory.length === 0 ? (
+                <Tr><Td colSpan={5} className="text-center py-8 text-content-muted">No inventory found.</Td></Tr>
+              ) : inventory.map((item) => (
+                <Tr key={item._id}>
                   <Td className="pl-6">
-                    <div className="font-bold text-content-primary">{item.product}</div>
-                    <div className="text-[10px] font-mono text-content-secondary mt-0.5">{item.sku}</div>
+                    <div className="font-bold text-content-primary">{item.productName || 'Unknown Product'}</div>
+                    <div className="text-[10px] font-mono text-content-secondary mt-0.5">{item.productSku || 'UNKNOWN'}</div>
                   </Td>
                   <Td>
                     <span className="text-[11px] font-bold text-content-secondary uppercase tracking-wider flex items-center gap-1.5">
-                      <MapPin className="w-3 h-3 text-content-muted" /> {item.location}
+                      <MapPin className="w-3 h-3 text-content-muted" /> {item.warehouseName || 'Unknown Warehouse'}
                     </span>
                   </Td>
                   <Td className="text-right">
-                    <span className={`font-extrabold ${item.available === 0 ? 'text-danger-text' : item.available < 20 ? 'text-warning-text' : 'text-content-primary'}`}>
-                      {item.available}
+                    <span className={`font-extrabold ${item.quantityAvailable === 0 ? 'text-danger-text' : item.quantityAvailable < item.reorderPoint ? 'text-warning-text' : 'text-content-primary'}`}>
+                      {item.quantityAvailable}
                     </span>
                   </Td>
-                  <Td className="text-right font-medium text-content-secondary">{item.reserved}</Td>
-                  <Td className="text-right font-medium text-indigo-600">{item.incoming || '-'}</Td>
+                  <Td className="text-right font-medium text-content-secondary">{item.quantityReserved}</Td>
                   <Td>
                     <Badge variant={
                       item.status === 'In Stock' ? 'success' : 
@@ -134,6 +118,14 @@ export default function InventoryPage() {
               ))}
             </Tbody>
           </Table>
+
+          <div className="p-4 border-t border-border flex items-center justify-between text-[11px] font-bold text-content-secondary bg-surface">
+            <div>Showing {inventory.length} of {total} items (Page {page} of {totalPages})</div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="h-7 text-[10px] bg-surface border-border" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Previous</Button>
+              <Button variant="outline" size="sm" className="h-7 text-[10px] bg-surface border-border" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Next</Button>
+            </div>
+          </div>
         </div>
 
       </div>

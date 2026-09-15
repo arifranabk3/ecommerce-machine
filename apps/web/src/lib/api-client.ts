@@ -30,7 +30,7 @@ export const fetcher = async (url: string) => {
   }
 
   const json = await res.json();
-  return json.data;
+  return json.data !== undefined ? json.data : json;
 };
 
 export function useApiQuery<T>(url: string | null, options?: SWRConfiguration) {
@@ -63,7 +63,7 @@ const mutator = async (url: string, { arg }: { arg: { method?: string; body?: an
   }
 
   const json = await res.json();
-  return json.data;
+  return json.data !== undefined ? json.data : json;
 };
 
 export function useApiMutation<T, S>(url: string, options?: SWRMutationConfiguration<T, Error, string, { method?: string; body?: S }>) {

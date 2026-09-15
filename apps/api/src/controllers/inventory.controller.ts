@@ -67,6 +67,31 @@ export class InventoryController {
     }
   }
 
+  static async listInventory(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      const tenantId = req.user!.tenantId;
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+      const productId = req.query.productId as string;
+      const warehouseId = req.query.warehouseId as string;
+      const status = req.query.status as string;
+      const search = req.query.search as string;
+
+      const result = await InventoryService.getAllInventory(tenantId, {
+        productId,
+        warehouseId,
+        status,
+        search,
+        page,
+        limit
+      });
+
+      return res.json({ success: true, ...result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async getMovements(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     try {
       const tenantId = req.user!.tenantId;

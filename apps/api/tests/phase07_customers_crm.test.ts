@@ -138,14 +138,14 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
     jest.spyOn(CustomerModel, 'find').mockReturnValue(mockQuery([]));
     jest.spyOn(CustomerModel, 'countDocuments').mockResolvedValue(0 as any);
 
-    const res = await request(app).get('/api/v1/customers').set('Authorization', `Bearer ${tokenA}`);
+    const res = await request(app).get('/api/v1/customers').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(200);
   });
 
   it('2. Tenant A cannot read Tenant B customer', async () => {
     jest.spyOn(CustomerModel, 'findOne').mockResolvedValue(null);
 
-    const res = await request(app).get('/api/v1/customers/cus_b').set('Authorization', `Bearer ${tokenA}`);
+    const res = await request(app).get('/api/v1/customers/cus_b').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(404);
   });
 
@@ -154,7 +154,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
 
     const res = await request(app)
       .patch('/api/v1/customers/cus_b')
-      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a')
       .send({ firstName: 'Hacked' });
     expect(res.status).toBe(404);
   });
@@ -164,7 +164,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
 
     const res = await request(app)
       .post('/api/v1/customers/cus_b/archive')
-      .set('Authorization', `Bearer ${tokenA}`);
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(404);
   });
 
@@ -173,7 +173,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
 
     const res = await request(app)
       .post('/api/v1/customers/merge')
-      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a')
       .send({ primaryCustomerId: 'cus_a', secondaryCustomerId: 'cus_b', reason: 'Cross merge test' });
     expect(res.status).toBe(404);
   });
@@ -183,7 +183,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
 
     const res = await request(app)
       .get('/api/v1/customers/cus_b/addresses')
-      .set('Authorization', `Bearer ${tokenA}`);
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(404);
   });
 
@@ -192,7 +192,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
 
     const res = await request(app)
       .get('/api/v1/customers/cus_b/notes')
-      .set('Authorization', `Bearer ${tokenA}`);
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(404);
   });
 
@@ -201,7 +201,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
 
     const res = await request(app)
       .get('/api/v1/customers/cus_b/activity')
-      .set('Authorization', `Bearer ${tokenA}`);
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(404);
   });
 
@@ -210,7 +210,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
 
     const res = await request(app)
       .get('/api/v1/customers/cus_b/orders')
-      .set('Authorization', `Bearer ${tokenA}`);
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(404);
   });
 
@@ -223,7 +223,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
 
     await request(app)
       .post('/api/v1/customers')
-      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a')
       .send({ firstName: 'Override', lastName: 'Test', tenantId: tenantB });
   });
 
@@ -236,7 +236,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
 
     await request(app)
       .get('/api/v1/customers')
-      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a')
       .set('x-tenant-id', tenantB);
   });
 
@@ -245,14 +245,14 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   // ====================================================
 
   it('12. customers.view required for list', async () => {
-    const res = await request(app).get('/api/v1/customers').set('Authorization', `Bearer ${tokenRestricted}`);
+    const res = await request(app).get('/api/v1/customers').set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(403);
   });
 
   it('13. customers.create required for creation', async () => {
     const res = await request(app)
       .post('/api/v1/customers')
-      .set('Authorization', `Bearer ${tokenRestricted}`)
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a')
       .send({ firstName: 'NoPerm', lastName: 'User' });
     expect(res.status).toBe(403);
   });
@@ -260,7 +260,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('14. customers.update required for profile update', async () => {
     const res = await request(app)
       .patch('/api/v1/customers/cus_1')
-      .set('Authorization', `Bearer ${tokenRestricted}`)
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a')
       .send({ firstName: 'New' });
     expect(res.status).toBe(403);
   });
@@ -268,14 +268,14 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('15. customers.archive required', async () => {
     const res = await request(app)
       .post('/api/v1/customers/cus_1/archive')
-      .set('Authorization', `Bearer ${tokenRestricted}`);
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(403);
   });
 
   it('16. customers.merge required', async () => {
     const res = await request(app)
       .post('/api/v1/customers/merge')
-      .set('Authorization', `Bearer ${tokenRestricted}`)
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a')
       .send({ primaryCustomerId: 'c1', secondaryCustomerId: 'c2', reason: 'r' });
     expect(res.status).toBe(403);
   });
@@ -283,7 +283,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('17. customers.notes required', async () => {
     const res = await request(app)
       .post('/api/v1/customers/cus_1/notes')
-      .set('Authorization', `Bearer ${tokenRestricted}`)
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a')
       .send({ content: 'Note' });
     expect(res.status).toBe(403);
   });
@@ -291,14 +291,14 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('18. customers.addresses required', async () => {
     const res = await request(app)
       .get('/api/v1/customers/cus_1/addresses')
-      .set('Authorization', `Bearer ${tokenRestricted}`);
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(403);
   });
 
   it('19. customers.tags required', async () => {
     const res = await request(app)
       .post('/api/v1/customers/cus_1/tags')
-      .set('Authorization', `Bearer ${tokenRestricted}`)
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a')
       .send({ tag: 'VIP' });
     expect(res.status).toBe(403);
   });
@@ -306,7 +306,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('20. customers.consent required', async () => {
     const res = await request(app)
       .post('/api/v1/customers/cus_1/consent')
-      .set('Authorization', `Bearer ${tokenRestricted}`)
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a')
       .send({ marketingConsent: true });
     expect(res.status).toBe(403);
   });
@@ -314,14 +314,14 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('21. customers.segments.view required', async () => {
     const res = await request(app)
       .get('/api/v1/customers/segments/all')
-      .set('Authorization', `Bearer ${tokenRestricted}`);
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(403);
   });
 
   it('22. customers.segments.manage required', async () => {
     const res = await request(app)
       .post('/api/v1/customers/segments')
-      .set('Authorization', `Bearer ${tokenRestricted}`)
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a')
       .send({ name: 'Seg', conditions: [{ field: 'totalOrders', operator: 'gt', value: 1 }] });
     expect(res.status).toBe(403);
   });
@@ -347,7 +347,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('25. invalid email rejected', async () => {
     const res = await request(app)
       .post('/api/v1/customers')
-      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a')
       .send({ firstName: 'Bad', lastName: 'Email', email: 'invalid-email-format' });
     expect(res.status).toBe(400);
   });
@@ -370,7 +370,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('29. empty customer name rejected', async () => {
     const res = await request(app)
       .post('/api/v1/customers')
-      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a')
       .send({ firstName: '', lastName: '' });
     expect(res.status).toBe(400);
   });
@@ -378,7 +378,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('30. invalid status rejected by validation schema', async () => {
     const res = await request(app)
       .patch('/api/v1/customers/c1')
-      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a')
       .send({ status: 'SUPER_ACTIVE' });
     expect(res.status).toBe(400);
   });
@@ -386,7 +386,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('31. invalid lifecycle rejected by validation schema', async () => {
     const res = await request(app)
       .patch('/api/v1/customers/c1')
-      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a')
       .send({ lifecycleStage: 'ULTRA_VIP' });
     expect(res.status).toBe(400);
   });
@@ -402,7 +402,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
 
     const res = await request(app)
       .get('/api/v1/customers/cus_1/orders')
-      .set('Authorization', `Bearer ${tokenA}`);
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(200);
   });
 
@@ -410,7 +410,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
     jest.spyOn(CustomerModel, 'findOne').mockResolvedValue(null as any);
     const res = await request(app)
       .get('/api/v1/customers/cus_b/orders')
-      .set('Authorization', `Bearer ${tokenA}`);
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(404);
   });
 
@@ -472,7 +472,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
     jest.spyOn(CustomerModel, 'findOne').mockResolvedValue(null as any);
     const res = await request(app)
       .get('/api/v1/customers/cus_b/addresses')
-      .set('Authorization', `Bearer ${tokenA}`);
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(404);
   });
 
@@ -482,7 +482,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
 
     const res = await request(app)
       .delete('/api/v1/customers/c1/addresses/addr_other_cus')
-      .set('Authorization', `Bearer ${tokenA}`);
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(500); // Address not found error caught by handler
   });
 
@@ -506,7 +506,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('41. invalid address rejected', async () => {
     const res = await request(app)
       .post('/api/v1/customers/c1/addresses')
-      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a')
       .send({ fullName: 'Missing Fields' });
     expect(res.status).toBe(400);
   });
@@ -533,7 +533,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('44. unauthorized tag update rejected', async () => {
     const res = await request(app)
       .post('/api/v1/customers/c1/tags')
-      .set('Authorization', `Bearer ${tokenRestricted}`)
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a')
       .send({ tag: 'Tag' });
     expect(res.status).toBe(403);
   });
@@ -542,7 +542,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
     jest.spyOn(CustomerModel, 'findOne').mockResolvedValue(null as any);
     const res = await request(app)
       .post('/api/v1/customers/cus_b/tags')
-      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a')
       .send({ tag: 'CrossTag' });
     expect(res.status).toBe(404);
   });
@@ -550,7 +550,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('46. notes permission required', async () => {
     const res = await request(app)
       .post('/api/v1/customers/c1/notes')
-      .set('Authorization', `Bearer ${tokenRestricted}`)
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a')
       .send({ content: 'Secret' });
     expect(res.status).toBe(403);
   });
@@ -559,7 +559,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
     jest.spyOn(CustomerModel, 'findOne').mockResolvedValue(null as any);
     const res = await request(app)
       .get('/api/v1/customers/cus_b/notes')
-      .set('Authorization', `Bearer ${tokenA}`);
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(404);
   });
 
@@ -591,7 +591,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('50. consent permission required', async () => {
     const res = await request(app)
       .post('/api/v1/customers/c1/consent')
-      .set('Authorization', `Bearer ${tokenRestricted}`)
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a')
       .send({ marketingConsent: true });
     expect(res.status).toBe(403);
   });
@@ -620,7 +620,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('53. merge permission required', async () => {
     const res = await request(app)
       .post('/api/v1/customers/merge')
-      .set('Authorization', `Bearer ${tokenRestricted}`)
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a')
       .send({ primaryCustomerId: 'c1', secondaryCustomerId: 'c2', reason: 'Audit' });
     expect(res.status).toBe(403);
   });
@@ -731,7 +731,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('62. raw Mongo query rejected in segment creation', async () => {
     const res = await request(app)
       .post('/api/v1/customers/segments')
-      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a')
       .send({ name: 'Hacked Seg', conditions: [{ field: '$where', operator: 'eq', value: '1==1' }] });
     expect(res.status).toBe(400);
   });
@@ -762,7 +762,7 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
   it('67. segment permission enforced', async () => {
     const res = await request(app)
       .get('/api/v1/customers/segments/seg_1/evaluate')
-      .set('Authorization', `Bearer ${tokenRestricted}`);
+      .set('Authorization', `Bearer ${tokenRestricted}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(403);
   });
 

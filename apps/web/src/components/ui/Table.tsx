@@ -40,8 +40,8 @@ export const Th: React.FC<{ children?: React.ReactNode; className?: string }> = 
   </th>
 );
 
-export const Td: React.FC<{ children?: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
-  <td className={cn("px-4 py-4 whitespace-nowrap", className)}>
+export const Td: React.FC<React.TdHTMLAttributes<HTMLTableCellElement>> = ({ children, className = '', ...props }) => (
+  <td className={cn("px-4 py-4 whitespace-nowrap", className)} {...props}>
     {children}
   </td>
 );

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -7,18 +7,74 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { 
-  ArrowLeft,
-  Save,
-  Trash2,
-  Image as ImageIcon,
-  MoreVertical,
-  Globe
+  ArrowLeft, Save, Trash2, Image as ImageIcon, MoreVertical, Globe, AlertCircle
 } from 'lucide-react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useApiQuery, useApiMutation } from '@/lib/api-client';
 
 export default function ProductDetailPage() {
   const params = useParams();
+  const router = useRouter();
+  const productId = params.id as string;
+
+  const { data: product, isLoading, error: fetchError } = useApiQuery<any>(`/api/v1/products/${productId}`);
+  const { trigger: updateProduct, isMutating } = useApiMutation(`/api/v1/products/${productId}`);
+
   const [activeTab, setActiveTab] = useState('overview');
+  const [formData, setFormData] = useState<any>({
+    name: '',
+    description: '',
+    status: 'DRAFT'
+  });
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (product) {
+      setFormData({
+        name: product.name || '',
+        description: product.description || '',
+        status: product.status || 'DRAFT'
+      });
+    }
+  }, [product]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev: any) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSave = async () => {
+    setError(null);
+    try {
+      await updateProduct({
+        method: 'PATCH',
+        body: {
+          name: formData.name,
+          description: formData.description,
+          status: formData.status
+        }
+      });
+      // Handle success locally (e.g. toast), for now just ignore
+    } catch (err: any) {
+      setError(err.message || 'Failed to update product');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="p-8 text-center text-content-muted">Loading product...</div>
+      </DashboardLayout>
+    );
+  }
+
+  if (fetchError || !product) {
+    return (
+      <DashboardLayout>
+        <div className="p-8 text-center text-danger-text">Failed to load product.</div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -32,19 +88,19 @@ export default function ProductDetailPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-extrabold text-content-primary tracking-tight">AirMax Pro Wireless</h1>
-                <Badge variant="success">Active</Badge>
+                <h1 className="text-2xl font-extrabold text-content-primary tracking-tight">{product.name}</h1>
+                <Badge variant={product.status === 'ACTIVE' ? 'success' : 'neutral'}>{product.status}</Badge>
               </div>
               <p className="text-content-secondary text-sm mt-1 font-medium flex items-center gap-2">
-                SKU: <code className="bg-surface-secondary px-1.5 py-0.5 rounded text-content-primary">AUDIO-001</code>
+                SKU: <code className="bg-surface-secondary px-1.5 py-0.5 rounded text-content-primary">{product.sku}</code>
               </p>
             </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" className="bg-surface">
                 <Globe className="w-4 h-4 mr-2" /> View on Store
               </Button>
-              <Button variant="primary">
-                <Save className="w-4 h-4 mr-2" /> Save Changes
+              <Button variant="primary" onClick={handleSave} disabled={isMutating}>
+                <Save className="w-4 h-4 mr-2" /> {isMutating ? 'Saving...' : 'Save Changes'}
               </Button>
               <Button variant="outline" size="icon" className="bg-surface ml-1">
                 <MoreVertical className="w-4 h-4 text-content-secondary" />
@@ -52,6 +108,13 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
+
+        {error && (
+          <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm flex items-center gap-2 border border-red-200">
+            <AlertCircle className="w-4 h-4" />
+            {error}
+          </div>
+        )}
 
         {/* Tab Navigation */}
         <div className="border-b border-border">
@@ -83,12 +146,19 @@ export default function ProductDetailPage() {
               <CardContent className="p-6">
                 <h3 className="text-sm font-bold text-content-primary uppercase tracking-widest mb-6 border-b border-border pb-4">General Information</h3>
                 <div className="space-y-5">
-                  <Input label="Product Name" defaultValue="AirMax Pro Wireless" />
+                  <Input 
+                    label="Product Name" 
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange as any}
+                  />
                   <div>
                     <label className="block text-sm font-medium text-content-primary mb-1.5">Description</label>
                     <textarea 
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
                       className="w-full h-32 bg-surface border border-border rounded-lg p-3 text-sm text-content-primary focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors shadow-sm"
-                      defaultValue="Premium wireless headphones featuring active noise cancellation and 30-hour battery life."
                     />
                   </div>
                 </div>
@@ -103,43 +173,14 @@ export default function ProductDetailPage() {
                     <ImageIcon className="w-8 h-8 mb-2 opacity-50 group-hover:opacity-100 transition-opacity" />
                     <span className="text-xs font-bold">Add Media</span>
                   </div>
-                  <div className="aspect-square bg-surface-secondary rounded-xl border border-border relative group overflow-hidden">
-                    <div className="absolute inset-0 bg-content-primary/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="danger" size="sm" className="h-7 text-[10px]">Remove</Button>
+                  {product.images?.map((img: string, i: number) => (
+                    <div key={i} className="aspect-square bg-surface-secondary rounded-xl border border-border relative group overflow-hidden">
+                      <img src={img} alt="Product" className="w-full h-full object-cover" />
+                      <div className="absolute inset-0 bg-content-primary/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="danger" size="sm" className="h-7 text-[10px]">Remove</Button>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex justify-between items-center mb-6 border-b border-border pb-4">
-                  <h3 className="text-sm font-bold text-content-primary uppercase tracking-widest">Variants</h3>
-                  <Button variant="outline" size="sm" className="bg-surface text-content-secondary">Add Variant</Button>
-                </div>
-                <div className="bg-surface rounded-lg border border-border overflow-hidden">
-                  <div className="grid grid-cols-4 p-3 text-[10px] font-bold text-content-secondary uppercase tracking-wider border-b border-border bg-surface-secondary">
-                    <div className="col-span-2">Variant</div>
-                    <div>SKU</div>
-                    <div>Price</div>
-                  </div>
-                  <div className="grid grid-cols-4 p-3 items-center hover:bg-surface-hover transition-colors border-b border-border text-sm text-content-primary font-medium">
-                    <div className="col-span-2 flex items-center gap-2">
-                      <div className="w-8 h-8 bg-surface-secondary rounded shrink-0 border border-border"></div>
-                      Matte Black
-                    </div>
-                    <div>AUDIO-001-BLK</div>
-                    <div>$299.00</div>
-                  </div>
-                  <div className="grid grid-cols-4 p-3 items-center hover:bg-surface-hover transition-colors text-sm text-content-primary font-medium">
-                    <div className="col-span-2 flex items-center gap-2">
-                      <div className="w-8 h-8 bg-surface-secondary rounded shrink-0 border border-border"></div>
-                      Lunar White
-                    </div>
-                    <div>AUDIO-001-WHT</div>
-                    <div>$299.00</div>
-                  </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -152,51 +193,28 @@ export default function ProductDetailPage() {
                 <h3 className="text-sm font-bold text-content-primary uppercase tracking-widest mb-6 border-b border-border pb-4">Organization</h3>
                 <div className="space-y-5">
                   <div>
-                    <label className="block text-xs font-bold text-content-secondary uppercase tracking-wider mb-2">Category</label>
-                    <select className="w-full h-10 bg-surface border border-border rounded-lg px-3 text-sm text-content-primary focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors shadow-sm">
-                      <option>Electronics</option>
-                      <option>Audio</option>
-                      <option>Accessories</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-content-secondary uppercase tracking-wider mb-2">Vendor</label>
-                    <select className="w-full h-10 bg-surface border border-border rounded-lg px-3 text-sm text-content-primary focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors shadow-sm">
-                      <option>Acme Corp</option>
-                      <option>TechSource</option>
+                    <label className="block text-xs font-bold text-content-secondary uppercase tracking-wider mb-2">Status</label>
+                    <select 
+                      name="status"
+                      value={formData.status}
+                      onChange={handleChange}
+                      className="w-full h-10 bg-surface border border-border rounded-lg px-3 text-sm text-content-primary focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors shadow-sm"
+                    >
+                      <option value="DRAFT">Draft</option>
+                      <option value="ACTIVE">Active</option>
+                      <option value="ARCHIVED">Archived</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-content-secondary uppercase tracking-wider mb-2">Tags</label>
                     <div className="flex flex-wrap gap-2 mb-2">
-                      <span className="bg-surface-secondary text-content-secondary text-xs px-2 py-1 rounded-md flex items-center gap-1 font-medium border border-border">
-                        audio <button className="text-content-muted hover:text-content-primary">&times;</button>
-                      </span>
-                      <span className="bg-surface-secondary text-content-secondary text-xs px-2 py-1 rounded-md flex items-center gap-1 font-medium border border-border">
-                        premium <button className="text-content-muted hover:text-content-primary">&times;</button>
-                      </span>
+                      {product.tags?.map((tag: string) => (
+                        <span key={tag} className="bg-surface-secondary text-content-secondary text-xs px-2 py-1 rounded-md flex items-center gap-1 font-medium border border-border">
+                          {tag} <button className="text-content-muted hover:text-content-primary">&times;</button>
+                        </span>
+                      ))}
                     </div>
                     <Input placeholder="Add tag..." />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-sm font-bold text-content-primary uppercase tracking-widest mb-6 border-b border-border pb-4">Channels</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-content-muted bg-surface transition-colors">
-                    <span className="text-sm font-bold text-content-primary">Online Store</span>
-                    <div className="w-8 h-4 bg-success rounded-full relative">
-                      <div className="w-3 h-3 bg-white rounded-full absolute right-0.5 top-0.5 shadow-sm"></div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-3 rounded-lg border border-border hover:border-content-muted bg-surface transition-colors">
-                    <span className="text-sm font-bold text-content-primary">B2B Portal</span>
-                    <div className="w-8 h-4 bg-surface-secondary border border-border rounded-full relative">
-                      <div className="w-3 h-3 bg-content-muted rounded-full absolute left-0.5 top-0.5 shadow-sm"></div>
-                    </div>
                   </div>
                 </div>
               </CardContent>
