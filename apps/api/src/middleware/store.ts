@@ -15,7 +15,7 @@ export async function storeScope(req: AuthenticatedRequest, _res: Response, next
   const requestStoreId = (req.headers['x-store-id'] as string) || req.body?.storeId || req.query?.storeId;
 
   if (!requestStoreId) {
-    return next(new AppError('Store context (X-Store-ID) required', 400, 'STORE_SCOPE_REQUIRED'));
+    return next(new AppError('x-store-id header is required', 400, 'STORE_SCOPE_REQUIRED'));
   }
 
   try {
@@ -35,7 +35,7 @@ export async function storeScope(req: AuthenticatedRequest, _res: Response, next
     // 2. Verify store belongs to tenant
     const store = await StoreModel.findOne({ storeId: requestStoreId, tenantId: req.user.tenantId });
     if (!store) {
-      return next(new AppError('Forbidden: Store does not exist or does not belong to this tenant', 403, 'STORE_MISMATCH'));
+      return next(new AppError('Forbidden: Store does not exist or does not belong to this tenant', 403, 'STORE_ACCESS_DENIED'));
     }
 
     // 3. Attach validated storeId to request

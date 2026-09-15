@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { OrderController } from '../controllers/order.controller';
 import { authenticateToken, requirePermission } from '../middleware/auth';
+import { storeScope } from '../middleware/store';
 
 const router = Router();
 
 router.use(authenticateToken);
+router.use(storeScope);
 
 router.get('/', requirePermission('orders.view'), OrderController.listOrders);
 router.post('/', requirePermission('orders.create'), OrderController.createOrder);

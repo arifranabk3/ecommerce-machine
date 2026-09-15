@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { CustomerController } from '../controllers/customer.controller';
 import { authenticateToken, requirePermission } from '../middleware/auth';
+import { storeScope } from '../middleware/store';
 
 const router = Router();
 
 router.use(authenticateToken);
+router.use(storeScope);
 
 // Static / Specific Sub-routes
 router.get('/duplicates', requirePermission('customers.view'), CustomerController.detectDuplicates);

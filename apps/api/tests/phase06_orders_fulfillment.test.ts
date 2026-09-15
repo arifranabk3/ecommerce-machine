@@ -152,7 +152,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
     }) as any);
     jest.spyOn(OrderModel, 'countDocuments').mockResolvedValue(0);
 
-    const res = await request(app).get('/api/v1/orders').set('Authorization', `Bearer ${tokenA}`);
+    const res = await request(app).get('/api/v1/orders').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(200);
     expect(res.body.items).toHaveLength(0);
   });
@@ -163,7 +163,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
       return Promise.resolve({ _id: 'ord_b', tenantId: tenantB });
     }) as any);
 
-    const res = await request(app).get('/api/v1/orders/ord_b').set('Authorization', `Bearer ${tokenA}`);
+    const res = await request(app).get('/api/v1/orders/ord_b').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(404);
   });
 
@@ -173,7 +173,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
       return Promise.resolve({ _id: 'ord_b', tenantId: tenantB });
     }) as any);
 
-    const res = await request(app).patch('/api/v1/orders/ord_b').set('Authorization', `Bearer ${tokenA}`).send({ notes: 'Hacked' });
+    const res = await request(app).patch('/api/v1/orders/ord_b').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a').send({ notes: 'Hacked' });
     expect(res.status).toBe(404);
   });
 
@@ -240,7 +240,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
       return mockQuery([]);
     }) as any);
 
-    await request(app).get('/api/v1/orders').set('Authorization', `Bearer ${tokenA}`).set('x-tenant-id', tenantB);
+    await request(app).get('/api/v1/orders').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a').set('x-tenant-id', tenantB);
   });
 
   it('10. cross-tenant order ID manipulation rejected', async () => {
@@ -249,7 +249,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
       return Promise.resolve({ _id: 'ord_tenant_b', tenantId: tenantB });
     }) as any);
 
-    const res = await request(app).post('/api/v1/orders/ord_tenant_b/confirm').set('Authorization', `Bearer ${tokenA}`);
+    const res = await request(app).post('/api/v1/orders/ord_tenant_b/confirm').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(404);
   });
 
@@ -258,14 +258,14 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   // ====================================================
 
   it('11. orders.view required', async () => {
-    const res = await request(app).get('/api/v1/orders').set('Authorization', `Bearer ${tokenNoPerms}`);
+    const res = await request(app).get('/api/v1/orders').set('Authorization', `Bearer ${tokenNoPerms}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(403);
   });
 
   it('12. orders.create required', async () => {
     const res = await request(app)
       .post('/api/v1/orders')
-      .set('Authorization', `Bearer ${tokenNoPerms}`)
+      .set('Authorization', `Bearer ${tokenNoPerms}`).set('x-store-id', 'store_a')
       .send({ customerSnapshot: { name: 'No Perm' }, warehouseId: 'l1', items: [{ productId: 'p1', quantity: 1 }] });
     expect(res.status).toBe(403);
   });
@@ -273,7 +273,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   it('13. orders.update required', async () => {
     const res = await request(app)
       .patch('/api/v1/orders/ord_1')
-      .set('Authorization', `Bearer ${tokenNoPerms}`)
+      .set('Authorization', `Bearer ${tokenNoPerms}`).set('x-store-id', 'store_a')
       .send({ notes: 'Test' });
     expect(res.status).toBe(403);
   });
@@ -281,21 +281,21 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   it('14. orders.confirm required', async () => {
     const res = await request(app)
       .post('/api/v1/orders/ord_1/confirm')
-      .set('Authorization', `Bearer ${tokenNoPerms}`);
+      .set('Authorization', `Bearer ${tokenNoPerms}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(403);
   });
 
   it('15. orders.cancel required', async () => {
     const res = await request(app)
       .post('/api/v1/orders/ord_1/cancel')
-      .set('Authorization', `Bearer ${tokenNoPerms}`);
+      .set('Authorization', `Bearer ${tokenNoPerms}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(403);
   });
 
   it('16. orders.fulfill required', async () => {
     const res = await request(app)
       .post('/api/v1/orders/ord_1/fulfillment')
-      .set('Authorization', `Bearer ${tokenNoPerms}`)
+      .set('Authorization', `Bearer ${tokenNoPerms}`).set('x-store-id', 'store_a')
       .send({ status: 'SHIPPED' });
     expect(res.status).toBe(403);
   });
@@ -303,7 +303,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   it('17. orders.hold required', async () => {
     const res = await request(app)
       .post('/api/v1/orders/ord_1/hold')
-      .set('Authorization', `Bearer ${tokenNoPerms}`);
+      .set('Authorization', `Bearer ${tokenNoPerms}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(403);
   });
 
@@ -342,7 +342,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   it('20. negative quantity rejected', async () => {
     const res = await request(app)
       .post('/api/v1/orders')
-      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a')
       .send({ customerSnapshot: { name: 'Bad Qty' }, warehouseId: 'l1', items: [{ productId: 'p1', quantity: -5 }] });
     expect(res.status).toBe(400);
   });
@@ -350,7 +350,7 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
   it('21. zero quantity rejected', async () => {
     const res = await request(app)
       .post('/api/v1/orders')
-      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a')
       .send({ customerSnapshot: { name: 'Zero Qty' }, warehouseId: 'l1', items: [{ productId: 'p1', quantity: 0 }] });
     expect(res.status).toBe(400);
   });

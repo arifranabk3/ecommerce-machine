@@ -60,7 +60,7 @@ describe('Tenant and Store Isolation Middleware', () => {
       await storeScope(req as any, res as Response, next as NextFunction);
       
       expect(next).toHaveBeenCalledWith(expect.any(AppError));
-      expect(next.mock.calls[0][0].message).toContain('Store context (X-Store-ID) required');
+      expect(next.mock.calls[0][0].message).toContain('x-store-id header is required');
     });
 
     it('should block access if user does not have allowedStoreIds for the requested store', async () => {

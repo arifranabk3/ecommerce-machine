@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { authenticateToken, requirePermission } from '../middleware/auth';
+import { storeScope } from '../middleware/store';
 import { ProductController } from '../controllers/product.controller';
 
 const router = Router();
 
 router.use(authenticateToken);
+router.use(storeScope);
 
 // Product CRUD routes
 router.get('/', requirePermission('products.view'), ProductController.listProducts);

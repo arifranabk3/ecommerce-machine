@@ -119,7 +119,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
     }) as any);
     jest.spyOn(ProductModel, 'countDocuments').mockResolvedValue(0);
 
-    const res = await request(app).get('/api/v1/products').set('Authorization', `Bearer ${tokenA}`);
+    const res = await request(app).get('/api/v1/products').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(200);
     expect(res.body.items).toHaveLength(0);
   });
@@ -130,7 +130,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
       return Promise.resolve({ _id: 'prod_b', tenantId: tenantB });
     }) as any);
 
-    const res = await request(app).get('/api/v1/products/prod_b').set('Authorization', `Bearer ${tokenA}`);
+    const res = await request(app).get('/api/v1/products/prod_b').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(404);
   });
 
@@ -140,7 +140,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
       return Promise.resolve({ _id: 'prod_b', tenantId: tenantB });
     }) as any);
 
-    const res = await request(app).patch('/api/v1/products/prod_b').set('Authorization', `Bearer ${tokenA}`).send({ name: 'Hacked' });
+    const res = await request(app).patch('/api/v1/products/prod_b').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a').send({ name: 'Hacked' });
     expect(res.status).toBe(404);
   });
 
@@ -180,7 +180,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
       return Promise.resolve({ _id: 'loc_b', tenantId: tenantB });
     }) as any);
 
-    const res = await request(app).get('/api/v1/warehouses/loc_b').set('Authorization', `Bearer ${tokenA}`);
+    const res = await request(app).get('/api/v1/warehouses/loc_b').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a');
     expect(res.status).toBe(404);
   });
 
@@ -206,14 +206,14 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
 
     await request(app)
       .get('/api/v1/products')
-      .set('Authorization', `Bearer ${tokenA}`)
+      .set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a')
       .set('x-tenant-id', tenantB);
   });
 
   it('10. products.create permission required', async () => {
     const res = await request(app)
       .post('/api/v1/products')
-      .set('Authorization', `Bearer ${tokenNoPerms}`)
+      .set('Authorization', `Bearer ${tokenNoPerms}`).set('x-store-id', 'store_a')
       .send({ name: 'Product', sku: 'SKU-PERM', sellingPrice: 1000 });
 
     expect(res.status).toBe(403);
@@ -222,7 +222,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
   it('11. products.update permission required', async () => {
     const res = await request(app)
       .patch('/api/v1/products/prod_1')
-      .set('Authorization', `Bearer ${tokenNoPerms}`)
+      .set('Authorization', `Bearer ${tokenNoPerms}`).set('x-store-id', 'store_a')
       .send({ name: 'Updated' });
 
     expect(res.status).toBe(403);
@@ -231,7 +231,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
   it('12. inventory.adjust permission required', async () => {
     const res = await request(app)
       .post('/api/v1/inventory/adjustments')
-      .set('Authorization', `Bearer ${tokenNoPerms}`)
+      .set('Authorization', `Bearer ${tokenNoPerms}`).set('x-store-id', 'store_a')
       .send({ productId: 'p1', warehouseId: 'l1', quantityDelta: 10, reason: 'Adjustment' });
 
     expect(res.status).toBe(403);
@@ -240,7 +240,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
   it('13. inventory.transfer permission required', async () => {
     const res = await request(app)
       .post('/api/v1/inventory/transfers')
-      .set('Authorization', `Bearer ${tokenNoPerms}`)
+      .set('Authorization', `Bearer ${tokenNoPerms}`).set('x-store-id', 'store_a')
       .send({ productId: 'p1', fromWarehouseId: 'l1', toWarehouseId: 'l2', quantity: 5 });
 
     expect(res.status).toBe(403);
@@ -249,7 +249,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
   it('14. inventory.manage protected operations', async () => {
     const res = await request(app)
       .post('/api/v1/warehouses/loc_1/archive')
-      .set('Authorization', `Bearer ${tokenNoPerms}`);
+      .set('Authorization', `Bearer ${tokenNoPerms}`).set('x-store-id', 'store_a');
 
     expect(res.status).toBe(403);
   });
@@ -477,7 +477,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
   it('33. protected inventory operation returns 403', async () => {
     const res = await request(app)
       .post('/api/v1/inventory/adjustments')
-      .set('Authorization', `Bearer ${tokenNoPerms}`)
+      .set('Authorization', `Bearer ${tokenNoPerms}`).set('x-store-id', 'store_a')
       .send({ productId: 'p1', warehouseId: 'l1', quantityDelta: 10, reason: 'Deduct' });
 
     expect(res.status).toBe(403);
@@ -503,7 +503,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
   it('37. unauthorized category archive rejected', async () => {
     const res = await request(app)
       .post('/api/v1/categories/cat_1/archive')
-      .set('Authorization', `Bearer ${tokenNoPerms}`);
+      .set('Authorization', `Bearer ${tokenNoPerms}`).set('x-store-id', 'store_a');
 
     expect(res.status).toBe(403);
   });
@@ -527,7 +527,7 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
       return Promise.resolve({ _id: 'p_tenant_b', tenantId: tenantB });
     }) as any);
 
-    const res = await request(app).patch('/api/v1/products/p_tenant_b').set('Authorization', `Bearer ${tokenA}`).send({ name: 'Cross Hack' });
+    const res = await request(app).patch('/api/v1/products/p_tenant_b').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_a').send({ name: 'Cross Hack' });
     expect(res.status).toBe(404);
   });
 
