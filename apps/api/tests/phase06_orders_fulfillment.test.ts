@@ -102,9 +102,13 @@ describe('Phase 06 — Orders & Fulfillment 56 Mandatory Security & Integrity Te
         _id: query._id || 'user_a',
         tenantId: tenantA,
         status: 'ACTIVE',
-        roles: query._id === 'user_restricted' ? ['Restricted'] : ['Owner']
+        roles: query._id === 'user_restricted' ? ['Restricted'] : ['Owner'],
+        isOwner: query._id !== 'user_restricted',
+        allowedStoreIds: ['*']
       });
     }) as any);
+
+    jest.spyOn(StoreModel, 'findOne').mockImplementation((() => Promise.resolve({ _id: 'store_1', storeId: 'store_a', tenantId: tenantA })) as any);
 
     jest.spyOn(TenantMembershipModel, 'findOne').mockImplementation(((query: any) => {
       return Promise.resolve({

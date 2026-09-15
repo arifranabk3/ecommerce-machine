@@ -13,6 +13,7 @@ import { InventoryReservationModel } from '../src/models/InventoryReservation';
 import { AuditLogModel } from '../src/models/AuditLog';
 import { SessionModel } from '../src/models/Session';
 import { UserModel } from '../src/models/User';
+import { StoreModel } from '../src/models/Store';
 import { RoleModel } from '../src/models/Role';
 import { TenantMembershipModel } from '../src/models/TenantMembership';
 import { EntitlementService } from '../src/services/entitlement.service';
@@ -71,9 +72,13 @@ describe('Phase 05 — Products, Variants & Multi-Location Inventory 40 Mandator
         _id: query._id || 'user_a',
         tenantId: tenantA,
         status: 'ACTIVE',
-        roles: query._id === 'user_restricted' ? ['Restricted'] : ['Owner']
+        roles: query._id === 'user_restricted' ? ['Restricted'] : ['Owner'],
+        isOwner: query._id !== 'user_restricted',
+        allowedStoreIds: ['*']
       });
     }) as any);
+
+    jest.spyOn(StoreModel, 'findOne').mockImplementation((() => Promise.resolve({ _id: 'store_1', storeId: 'store_a', tenantId: tenantA })) as any);
 
     jest.spyOn(TenantMembershipModel, 'findOne').mockImplementation(((query: any) => {
       return Promise.resolve({
