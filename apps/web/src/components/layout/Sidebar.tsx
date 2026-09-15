@@ -99,11 +99,8 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
       )}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center gap-3 px-6 mb-8">
-            <Image src="/s-logo.png" alt="Sellzy Logo" width={32} height={32} className="object-contain" />
-            <div>
-              <h1 className="font-extrabold text-lg text-content-primary tracking-tight leading-none">Sellzy</h1>
-            </div>
+          <div className="flex items-center px-6 mb-8">
+            <Image src="/s-logo.png" alt="Sellzy Logo" width={140} height={40} className="w-32 h-auto object-contain" priority />
           </div>
 
           {/* Navigation */}
