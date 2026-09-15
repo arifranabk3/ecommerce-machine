@@ -7,6 +7,7 @@ export interface StoreContext {
   themeId: string;
   domain: string;
   name: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   cmsData?: any;
   isPublished?: boolean;
 }

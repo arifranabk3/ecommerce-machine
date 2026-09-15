@@ -10,6 +10,7 @@ import { CustomerCounterModel } from '../src/models/CustomerCounter';
 import { OrderModel } from '../src/models/Order';
 import { SessionModel } from '../src/models/Session';
 import { UserModel } from '../src/models/User';
+import { StoreModel } from '../src/models/Store';
 import { RbacService } from '../src/services/rbac.service';
 import { CustomerService } from '../src/services/customer.service';
 import { CustomerNumberService } from '../src/services/customer-number.service';
@@ -71,13 +72,18 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
       });
     }) as any);
 
-    jest.spyOn(UserModel, 'findOne').mockImplementation((() => {
+    jest.spyOn(UserModel, 'findOne').mockImplementation(((query: any) => {
       return Promise.resolve({
-        _id: 'user_a',
+        _id: query?._id || 'user_a',
         tenantId: tenantA,
-        status: 'ACTIVE'
+        status: 'ACTIVE',
+        roles: query?._id === 'user_restricted' ? ['Restricted'] : ['Owner'],
+        isOwner: query?._id !== 'user_restricted',
+        allowedStoreIds: ['*']
       });
     }) as any);
+
+    jest.spyOn(StoreModel, 'findOne').mockImplementation((() => Promise.resolve({ _id: 'store_1', storeId: 'store_a', tenantId: tenantA })) as any);
 
     jest.spyOn(RbacService, 'getEffectivePermissions').mockImplementation(((userId: string) => {
       if (userId === 'user_restricted') {
@@ -114,13 +120,18 @@ describe('Phase 07 — Customers & CRM 72 Security & Concurrency Test Suite', ()
       });
     }) as any);
 
-    jest.spyOn(UserModel, 'findOne').mockImplementation((() => {
+    jest.spyOn(UserModel, 'findOne').mockImplementation(((query: any) => {
       return Promise.resolve({
-        _id: 'user_a',
+        _id: query?._id || 'user_a',
         tenantId: tenantA,
-        status: 'ACTIVE'
+        status: 'ACTIVE',
+        roles: query?._id === 'user_restricted' ? ['Restricted'] : ['Owner'],
+        isOwner: query?._id !== 'user_restricted',
+        allowedStoreIds: ['*']
       });
     }) as any);
+
+    jest.spyOn(StoreModel, 'findOne').mockImplementation((() => Promise.resolve({ _id: 'store_1', storeId: 'store_a', tenantId: tenantA })) as any);
 
     jest.spyOn(RbacService, 'getEffectivePermissions').mockImplementation(((userId: string) => {
       if (userId === 'user_restricted') {
