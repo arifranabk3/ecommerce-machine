@@ -61,7 +61,7 @@ describe('Phase 15: Cross-Store Security Adversarial Verification', () => {
     }) as any);
 
     const { RbacService } = require('../src/services/rbac.service');
-    jest.spyOn(RbacService, 'getEffectivePermissions').mockResolvedValue(['orders.view', 'products.view', 'customers.view', 'analytics.view']);
+    jest.spyOn(RbacService, 'getEffectivePermissions').mockResolvedValue(['orders.view', 'products.view', 'customers.view', 'analytics.view', 'finance.view', 'inventory.view']);
 
     const { OrderModel } = require('../src/models/Order');
     jest.spyOn(OrderModel, 'find').mockReturnValue(mockQuery([]));
@@ -132,9 +132,12 @@ describe('Phase 15: Cross-Store Security Adversarial Verification', () => {
     const targetEndpoints = [
       '/api/v1/analytics/overview',
       '/api/v1/analytics/customers',
+      '/api/v1/analytics/inventory',
       '/api/v1/orders',
       '/api/v1/products',
       '/api/v1/customers',
+      '/api/v1/finance',
+      '/api/v1/finance/transactions'
     ];
 
     targetEndpoints.forEach(endpoint => {

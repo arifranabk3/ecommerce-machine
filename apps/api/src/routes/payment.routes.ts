@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { PaymentController } from '../controllers/payment.controller';
 import { authenticateToken, requirePermission } from '../middleware/auth';
+import { storeScope } from '../middleware/store';
 
 const router = Router();
 
@@ -43,6 +44,7 @@ refundRouter.post('/:id/process', requirePermission('refunds.process'), PaymentC
 // ==========================================
 export const financeRouter = Router();
 financeRouter.use(authenticateToken);
+financeRouter.use(storeScope);
 
 financeRouter.get('/', requirePermission('finance.view'), PaymentController.getFinanceSummary);
 financeRouter.get('/transactions', requirePermission('finance.view'), PaymentController.getFinancialTransactions);
