@@ -5,6 +5,7 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Building, Globe, DollarSign, Clock } from 'lucide-react';
+import { useApiQuery, useApiMutation } from '@/lib/api-client';
 
 export default function BusinessSettingsPage() {
   const [businessName, setBusinessName] = useState('');
@@ -13,105 +14,93 @@ export default function BusinessSettingsPage() {
   const [currency, setCurrency] = useState('PKR');
   const [country, setCountry] = useState('PK');
   const [locale, setLocale] = useState('en-PK');
-  const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('sellzy_token') : null;
+  const { data: tenantData, isLoading: isFetching } = useApiQuery<any>('/api/v1/tenant');
+  const { trigger: updateSettings, isMutating: isUpdating } = useApiMutation<any, any>('/api/v1/tenant/settings');
 
   useEffect(() => {
-    if (token) fetchTenant();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
-
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-
-  const fetchTenant = async () => {
-    try {
-      const res = await fetch(`${baseUrl}/api/v1/tenant`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.data) {
-        setBusinessName(data.data.businessName || '');
-        setLegalName(data.data.legalName || '');
-        setTimezone(data.data.timezone || 'UTC');
-        setCurrency(data.data.currency || 'PKR');
-        setCountry(data.data.country || 'PK');
-        setLocale(data.data.locale || 'en-PK');
-      }
-    } catch (e) {}
-  };
+    if (tenantData?.data) {
+      setBusinessName(tenantData.data.businessName || '');
+      setLegalName(tenantData.data.legalName || '');
+      setTimezone(tenantData.data.timezone || 'UTC');
+      setCurrency(tenantData.data.currency || 'PKR');
+      setCountry(tenantData.data.country || 'PK');
+      setLocale(tenantData.data.locale || 'en-PK');
+    }
+  }, [tenantData]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setMessage('');
 
     try {
-      const res = await fetch(`${baseUrl}/api/v1/tenant/settings`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ businessName, legalName, timezone, currency, country, locale })
-      });
-      const data = await res.json();
-      if (res.ok) {
+      const res = await updateSettings({ method: 'PATCH', body: { businessName, legalName, timezone, currency, country, locale } });
+      if (res.data) {
         setMessage('Business & Localization settings updated successfully!');
       } else {
-        setMessage(data.error?.message || 'Update failed');
+        setMessage(res.error?.message || 'Update failed');
       }
-    } catch (e) {
-      setMessage('Update failed');
-    } finally {
-      setIsLoading(false);
+    } catch (e: any) {
+      setMessage(e.message || 'Update failed');
     }
   };
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6 animate-fade-in pb-12">
         <div>
-          <h1 className="text-2xl font-bold text-brand-900">Store & Business Profile</h1>
-          <p className="text-sm text-slate-500">Configure business identity, regional timezone, and currency standards</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-brand-900">Store & Business Profile</h1>
+          <p className="text-sm font-medium text-slate-500 mt-1">Configure business identity, regional timezone, and currency standards</p>
         </div>
 
         {message && (
-          <div className="p-4 bg-brand-50 border border-brand-200 rounded-xl text-sm font-medium text-brand-900">
+          <div className={`p-4 border rounded-xl text-sm font-bold ${message.includes('success') ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
             {message}
           </div>
         )}
 
-        <Card title="General Business Information">
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+        <Card title="General Business Information" className="shadow-sm border-slate-200">
+          <form onSubmit={handleSave} className="space-y-5 p-2">
+            <div className="grid grid-cols-2 gap-5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Business Operating Name</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                  <Building className="w-3.5 h-3.5 text-slate-400" /> Business Operating Name
+                </label>
                 <input
                   type="text"
                   required
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-300"
+                  className="w-full px-3.5 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow bg-slate-50 hover:bg-white"
+                  disabled={isFetching}
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Legal Registered Name</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                  <Building className="w-3.5 h-3.5 text-slate-400" /> Legal Registered Name
+                </label>
                 <input
                   type="text"
                   value={legalName}
                   onChange={(e) => setLegalName(e.target.value)}
                   placeholder="Legal Entity Ltd."
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-300"
+                  className="w-full px-3.5 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow bg-slate-50 hover:bg-white"
+                  disabled={isFetching}
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Operating Timezone</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-slate-400" /> Operating Timezone
+                </label>
                 <select
                   value={timezone}
                   onChange={(e) => setTimezone(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-300 bg-white"
+                  className="w-full px-3.5 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow bg-slate-50 hover:bg-white cursor-pointer"
+                  disabled={isFetching}
                 >
                   <option value="UTC">UTC (Universal)</option>
                   <option value="Asia/Karachi">Asia/Karachi (PKT +05:00)</option>
@@ -121,11 +110,14 @@ export default function BusinessSettingsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Store Currency</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                  <DollarSign className="w-3.5 h-3.5 text-slate-400" /> Store Currency
+                </label>
                 <select
                   value={currency}
                   onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-300 bg-white"
+                  className="w-full px-3.5 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow bg-slate-50 hover:bg-white cursor-pointer"
+                  disabled={isFetching}
                 >
                   <option value="PKR">PKR (Pakistani Rupee)</option>
                   <option value="USD">USD (US Dollar)</option>
@@ -135,18 +127,21 @@ export default function BusinessSettingsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Country / Locale</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5 text-slate-400" /> Country / Locale
+                </label>
                 <input
                   type="text"
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-300"
+                  className="w-full px-3.5 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-shadow bg-slate-50 hover:bg-white"
+                  disabled={isFetching}
                 />
               </div>
             </div>
 
-            <div className="pt-2">
-              <Button type="submit" variant="primary" isLoading={isLoading}>
+            <div className="pt-4 border-t border-slate-100 mt-6 flex justify-end">
+              <Button type="submit" variant="primary" isLoading={isUpdating} disabled={isFetching} className="px-6 shadow-sm">
                 Save Business Settings
               </Button>
             </div>
