@@ -138,10 +138,13 @@ describe('SELLZY — PHASE 10: PAYMENTS & FINANCE SECURITY & INTEGRITY GATE (155
       const uId = query?._id || userAId;
       const tId = query?.tenantId || tenantA;
       if (uId === unprivUserId) {
-        return Promise.resolve({ _id: unprivUserId, tenantId: tenantA, status: 'ACTIVE' });
+        return Promise.resolve({ _id: unprivUserId, tenantId: tenantA, status: 'ACTIVE', isOwner: false, allowedStoreIds: ['*'] });
       }
-      return Promise.resolve({ _id: uId, tenantId: tId, status: 'ACTIVE' });
+      return Promise.resolve({ _id: uId, tenantId: tId, status: 'ACTIVE', isOwner: true, allowedStoreIds: ['*'] });
     }) as any);
+
+    const { StoreModel } = require('../src/models/Store');
+    jest.spyOn(StoreModel, 'findOne').mockReturnValue(mockQuery({ _id: 'store_1', storeId: 'store_1', tenantId: tenantA, status: 'ACTIVE' }));
 
     jest.spyOn(RbacService, 'getEffectivePermissions').mockImplementation(((userId: string) => {
       if (userId === unprivUserId) return Promise.resolve([]);
@@ -218,14 +221,14 @@ describe('SELLZY — PHASE 10: PAYMENTS & FINANCE SECURITY & INTEGRITY GATE (155
 
     it('10. Tenant A cannot view Tenant B finance summary', async () => {
       jest.spyOn(FinancialTransactionModel, 'find').mockReturnValue(mockQuery([]));
-      const res = await request(app).get('/api/v1/finance').set('Authorization', `Bearer ${tokenA}`);
+      const res = await request(app).get('/api/v1/finance').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_1');
       expect(res.status).toBe(200);
       expect(res.body.data.grossRevenueMinor).toBe(0);
     });
 
     it('11. Tenant A cannot view Tenant B financial transactions', async () => {
       jest.spyOn(FinancialTransactionModel, 'find').mockReturnValue(mockQuery([]));
-      const res = await request(app).get('/api/v1/finance/transactions').set('Authorization', `Bearer ${tokenA}`);
+      const res = await request(app).get('/api/v1/finance/transactions').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_1');
       expect(res.status).toBe(200);
       expect(res.body.data).toHaveLength(0);
     });
@@ -358,12 +361,12 @@ describe('SELLZY — PHASE 10: PAYMENTS & FINANCE SECURITY & INTEGRITY GATE (155
     });
 
     it('29. finance.view required for GET /finance', async () => {
-      const res = await request(app).get('/api/v1/finance').set('Authorization', `Bearer ${unprivToken}`);
+      const res = await request(app).get('/api/v1/finance').set('Authorization', `Bearer ${unprivToken}`).set('x-store-id', 'store_1');
       expect(res.status).toBe(403);
     });
 
     it('30. finance.view required for GET /finance/transactions', async () => {
-      const res = await request(app).get('/api/v1/finance/transactions').set('Authorization', `Bearer ${unprivToken}`);
+      const res = await request(app).get('/api/v1/finance/transactions').set('Authorization', `Bearer ${unprivToken}`).set('x-store-id', 'store_1');
       expect(res.status).toBe(403);
     });
 
@@ -385,7 +388,7 @@ describe('SELLZY — PHASE 10: PAYMENTS & FINANCE SECURITY & INTEGRITY GATE (155
 
     it('34. Authorized Owner succeeds on GET /finance', async () => {
       jest.spyOn(FinancialTransactionModel, 'find').mockReturnValue(mockQuery([]));
-      const res = await request(app).get('/api/v1/finance').set('Authorization', `Bearer ${tokenA}`);
+      const res = await request(app).get('/api/v1/finance').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_1');
       expect(res.status).toBe(200);
     });
 
@@ -1548,7 +1551,7 @@ describe('SELLZY — PHASE 10: PAYMENTS & FINANCE SECURITY & INTEGRITY GATE (155
 
     it('130. Financial transaction pagination supports limit and skip', async () => {
       jest.spyOn(FinancialTransactionModel, 'find').mockReturnValue(mockQuery([]));
-      const res = await request(app).get('/api/v1/finance/transactions?page=2&limit=5').set('Authorization', `Bearer ${tokenA}`);
+      const res = await request(app).get('/api/v1/finance/transactions?page=2&limit=5').set('Authorization', `Bearer ${tokenA}`).set('x-store-id', 'store_1');
       expect(res.status).toBe(200);
       expect(res.body.pagination.page).toBe(2);
       expect(res.body.pagination.limit).toBe(5);
