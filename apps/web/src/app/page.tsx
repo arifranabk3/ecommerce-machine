@@ -37,14 +37,14 @@ import {
 import { useApiQuery } from '@/lib/api-client';
 
 export default function DashboardPage() {
-  const { data: overview, isLoading: overviewLoading, isError: overviewError } = useApiQuery<any>('/api/v1/analytics/overview');
+  const { data: overview, isLoading: overviewLoading, error: overviewError } = useApiQuery<any>('/api/v1/analytics/overview');
   const { data: customersStats } = useApiQuery<any>('/api/v1/analytics/customers');
-  const { data: customersData, isLoading: customersLoading, isError: customersError } = useApiQuery<any>('/api/v1/customers?limit=5');
-  const { data: ordersData, isLoading: ordersLoading, isError: ordersError } = useApiQuery<any>('/api/v1/orders?limit=5');
-  const { data: productsData, isLoading: productsLoading, isError: productsError } = useApiQuery<any>('/api/v1/products?limit=5');
-  const { data: inventoryHealth, isLoading: inventoryLoading, isError: inventoryError } = useApiQuery<any>('/api/v1/analytics/inventory');
+  const { data: customersData, isLoading: customersLoading, error: customersError } = useApiQuery<any>('/api/v1/customers?limit=5');
+  const { data: ordersData, isLoading: ordersLoading, error: ordersError } = useApiQuery<any>('/api/v1/orders?limit=5');
+  const { data: productsData, isLoading: productsLoading, error: productsError } = useApiQuery<any>('/api/v1/products?limit=5');
+  const { data: inventoryHealth, isLoading: inventoryLoading, error: inventoryError } = useApiQuery<any>('/api/v1/analytics/inventory');
   const { data: automationData } = useApiQuery<any>('/api/v1/analytics/automation');
-  const { data: financeOverview, isError: financeError } = useApiQuery<any>('/api/v1/finance');
+  const { data: financeOverview, error: financeError } = useApiQuery<any>('/api/v1/finance');
 
   const ordersList = ordersData?.data || [];
   const productsList = productsData?.data || [];
