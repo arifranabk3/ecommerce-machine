@@ -43,6 +43,7 @@ export default function DashboardPage() {
   const { data: ordersData, isLoading: ordersLoading } = useApiQuery<any>('/api/v1/orders?limit=5');
   const { data: productsData, isLoading: productsLoading } = useApiQuery<any>('/api/v1/products?limit=5');
   const { data: inventoryHealth, isLoading: inventoryLoading } = useApiQuery<any>('/api/v1/analytics/inventory');
+  const { data: automationData } = useApiQuery<any>('/api/v1/analytics/automation');
   const { data: financeOverview } = useApiQuery<any>('/api/v1/finance');
 
   const ordersList = ordersData?.data || [];
@@ -54,15 +55,7 @@ export default function DashboardPage() {
     return `Rs ${(minor / 100).toLocaleString()}`;
   };
 
-  const chartData = [
-    { name: 'Oct 12', revenue: 200000, previous: 150000 },
-    { name: 'Oct 14', revenue: 280000, previous: 190000 },
-    { name: 'Oct 16', revenue: 250000, previous: 210000 },
-    { name: 'Oct 18', revenue: 328420, previous: 260000 },
-    { name: 'Oct 20', revenue: 290000, previous: 230000 },
-    { name: 'Oct 22', revenue: 350000, previous: 280000 },
-    { name: 'Oct 24', revenue: 310000, previous: 300000 },
-  ];
+  const chartData = overview?.salesChartData || [];
 
   const inventoryData = inventoryHealth ? [
     { name: 'Available', value: inventoryHealth.totalAvailableStock || 0, color: '#10B981' },
@@ -70,6 +63,10 @@ export default function DashboardPage() {
   ] : [];
   
   const totalInventoryItems = inventoryHealth?.totalOnHandStock || 0;
+
+  const vendorPayables = financeOverview?.vendorPayablesMinor || 0;
+  const availableCash = financeOverview?.availableCashMinor || 0;
+  const hasCashWarning = vendorPayables > availableCash;
 
   return (
     <DashboardLayout>
@@ -93,6 +90,43 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Critical Alerts */}
+        {(hasCashWarning || automationData?.failedRuns > 0) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {hasCashWarning && (
+              <div className="bg-danger-subtle border border-danger p-4 rounded-xl flex items-center justify-between shadow-sm">
+                <div>
+                  <h3 className="text-danger-text font-extrabold text-sm flex items-center gap-2">
+                    <Activity className="w-4 h-4" /> CRITICAL WARNING
+                  </h3>
+                  <p className="text-danger-text/80 text-xs mt-1 font-medium">
+                    Vendor Payables ({formatCurrency(vendorPayables)}) exceed Available Cash ({formatCurrency(availableCash)}).
+                  </p>
+                </div>
+                <button className="px-3 py-1.5 bg-danger text-white rounded-lg text-xs font-bold shadow-sm hover:opacity-90">
+                  View Finance
+                </button>
+              </div>
+            )}
+            
+            {automationData?.failedRuns > 0 && (
+              <div className="bg-warning-subtle border border-warning p-4 rounded-xl flex items-center justify-between shadow-sm">
+                <div>
+                  <h3 className="text-warning-text font-extrabold text-sm flex items-center gap-2">
+                    <Zap className="w-4 h-4" /> FAILED AUTOMATIONS
+                  </h3>
+                  <p className="text-warning-text/80 text-xs mt-1 font-medium">
+                    {automationData.failedRuns} automation run(s) have failed and require attention.
+                  </p>
+                </div>
+                <button className="px-3 py-1.5 bg-warning text-white rounded-lg text-xs font-bold shadow-sm hover:opacity-90">
+                  View Failures
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* High-Level KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -136,10 +170,14 @@ export default function DashboardPage() {
                   <div>
                     <h2 className="text-lg font-bold text-content-primary">Revenue Overview</h2>
                     <div className="flex items-center gap-3 mt-2">
-                      <span className="text-3xl font-extrabold text-content-primary">Rs 1,284,320</span>
-                      <div className="flex items-center text-sm font-bold text-success-text bg-success-subtle px-2 py-0.5 rounded-md">
-                        <ArrowUpRight className="w-4 h-4 mr-1" />
-                        +18.4%
+                      <span className="text-3xl font-extrabold text-content-primary">{overviewLoading ? '...' : formatCurrency(overview?.netSalesMinor)}</span>
+                      <div className={`flex items-center text-sm font-bold px-2 py-0.5 rounded-md ${
+                        overview?.revenueGrowth >= 0 
+                          ? 'text-success-text bg-success-subtle' 
+                          : 'text-danger-text bg-danger-subtle'
+                      }`}>
+                        {overview?.revenueGrowth >= 0 ? <ArrowUpRight className="w-4 h-4 mr-1" /> : <ArrowDownRight className="w-4 h-4 mr-1" />}
+                        {overview?.revenueGrowth !== undefined ? `${overview.revenueGrowth > 0 ? '+' : ''}${overview.revenueGrowth}%` : '0%'}
                       </div>
                     </div>
                     <p className="text-[13px] font-medium text-content-secondary mt-1">vs. previous 30 days</p>
