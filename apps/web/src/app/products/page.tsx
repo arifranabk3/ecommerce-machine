@@ -29,10 +29,19 @@ export default function ProductsPage() {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
   };
 
-  const getMargin = (cost: number, price: number) => {
-    if (!price || price <= 0) return '0.00%';
-    const margin = ((price - (cost || 0)) / price) * 100;
-    return `${margin.toFixed(2)}%`;
+  const getMarginDisplay = (product: any) => {
+    const cost = product.costPrice;
+    const price = product.sellingPrice;
+    const margin = product.grossMarginPercentage;
+    
+    if (price == null || price <= 0) return '0.00%';
+    if (margin != null && !isNaN(margin) && isFinite(margin)) {
+      return `${Number(margin).toFixed(2)}%`;
+    }
+    
+    // Fallback if backend didn't supply it
+    const calcMargin = ((price - (cost || 0)) / price) * 100;
+    return `${calcMargin.toFixed(2)}%`;
   };
 
   return (
@@ -124,7 +133,7 @@ export default function ProductsPage() {
                   </Td>
                   <Td>
                     <span className="font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md text-xs border border-emerald-100">
-                      {getMargin(product.costPrice, product.sellingPrice)}
+                      {getMarginDisplay(product)}
                     </span>
                   </Td>
                   <Td>

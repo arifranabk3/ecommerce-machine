@@ -10,14 +10,25 @@ import {
   Filter,
   ArrowRightLeft,
   Download,
-  ChevronDown
+  Plus
 } from 'lucide-react';
 import { useApiQuery } from '@/lib/api-client';
+import { AdjustStockModal } from '@/components/inventory/AdjustStockModal';
+import { TransferStockModal } from '@/components/inventory/TransferStockModal';
 
 export default function InventoryPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
-  const { data, isLoading, error } = useApiQuery<{ items: any[], total: number, totalPages: number }>(`/api/v1/inventory?page=${page}&limit=20${searchTerm ? `&search=${searchTerm}` : ''}`);
+  const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>('');
+  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+
+  const { data: warehousesData } = useApiQuery<{ items: any[] }>('/api/v1/warehouses');
+  const warehouses = warehousesData?.items || [];
+
+  const { data, isLoading, error, mutate } = useApiQuery<{ items: any[], total: number, totalPages: number }>(
+    `/api/v1/inventory?page=${page}&limit=20${searchTerm ? `&search=${searchTerm}` : ''}${selectedWarehouseId ? `&warehouseId=${selectedWarehouseId}` : ''}`
+  );
 
   const inventory = data?.items || [];
   const total = data?.total || 0;
@@ -37,7 +48,10 @@ export default function InventoryPage() {
             <Button variant="outline" className="hidden sm:flex bg-surface">
               <Download className="w-4 h-4 mr-2" /> Export
             </Button>
-            <Button variant="primary">
+            <Button variant="outline" className="bg-surface" onClick={() => setIsAdjustModalOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" /> Adjust Stock
+            </Button>
+            <Button variant="primary" onClick={() => setIsTransferModalOpen(true)}>
               <ArrowRightLeft className="w-4 h-4 mr-2" /> Transfer Stock
             </Button>
           </div>
@@ -59,10 +73,21 @@ export default function InventoryPage() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-lg mr-2 hover:bg-surface-hover cursor-pointer transition-colors bg-surface">
+            <div className="flex items-center gap-2 px-3 py-1.5 border border-border rounded-lg mr-2 bg-surface">
               <MapPin className="w-3.5 h-3.5 text-brand-600" />
-              <span className="text-[11px] font-bold text-content-primary uppercase tracking-wider">All Locations</span>
-              <ChevronDown className="w-3.5 h-3.5 text-content-muted ml-1" />
+              <select
+                className="bg-transparent text-[11px] font-bold text-content-primary uppercase tracking-wider focus:outline-none cursor-pointer"
+                value={selectedWarehouseId}
+                onChange={(e) => {
+                  setSelectedWarehouseId(e.target.value);
+                  setPage(1);
+                }}
+              >
+                <option value="">All Locations</option>
+                {warehouses.map(w => (
+                  <option key={w._id} value={w._id}>{w.name}</option>
+                ))}
+              </select>
             </div>
             <Button variant="outline" size="sm" className="bg-surface shadow-none border-border">
               <Filter className="w-3.5 h-3.5 mr-2 text-content-secondary" /> Filters
@@ -129,6 +154,21 @@ export default function InventoryPage() {
         </div>
 
       </div>
+
+      <AdjustStockModal 
+        isOpen={isAdjustModalOpen} 
+        onClose={() => setIsAdjustModalOpen(false)} 
+        onSuccess={() => mutate()} 
+        warehouses={warehouses} 
+      />
+      
+      <TransferStockModal 
+        isOpen={isTransferModalOpen} 
+        onClose={() => setIsTransferModalOpen(false)} 
+        onSuccess={() => mutate()} 
+        warehouses={warehouses} 
+      />
     </DashboardLayout>
   );
 }
+
