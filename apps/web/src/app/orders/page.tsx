@@ -18,9 +18,20 @@ export default function OrdersPage() {
   const [page, setPage] = React.useState(1);
   const [searchTerm, setSearchTerm] = React.useState('');
   
-  const { data, isLoading, error } = useApiQuery<{ data: any[], total: number, page: number, limit: number }>(`/api/v1/orders?page=${page}&limit=20${searchTerm ? `&search=${searchTerm}` : ''}`);
+  const [activeTab, setActiveTab] = React.useState('All');
   
-  const orders = data?.data || [];
+  const getQueryStr = () => {
+    let q = `/api/v1/orders?page=${page}&limit=20`;
+    if (searchTerm) q += `&search=${searchTerm}`;
+    if (activeTab === 'Unfulfilled') q += `&fulfillmentStatus=PENDING`;
+    if (activeTab === 'Unpaid') q += `&paymentStatus=UNPAID`;
+    if (activeTab === 'Returns') q += `&status=CANCELLED`; // or a specific return state
+    return q;
+  };
+
+  const { data, isLoading, error } = useApiQuery<{ items: any[], total: number, page: number, limit: number }>(getQueryStr());
+  
+  const orders = data?.items || [];
   const total = data?.total || 0;
   
   const formatCurrency = (minor: number | undefined) => {
@@ -56,11 +67,12 @@ export default function OrdersPage() {
                 key={tab}
                 className={`
                   whitespace-nowrap py-2 px-1 border-b-2 font-bold text-xs uppercase tracking-wider transition-colors
-                  ${idx === 0 
+                  ${activeTab === tab 
                     ? 'border-brand-600 text-brand-600' 
                     : 'border-transparent text-content-secondary hover:text-content-primary hover:border-border'
                   }
                 `}
+                onClick={() => { setActiveTab(tab); setPage(1); }}
               >
                 {tab}
               </button>
@@ -75,7 +87,7 @@ export default function OrdersPage() {
             <input
               type="text"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
               placeholder="Search by order ID, customer, or email..."
               className="w-full pl-9 pr-4 py-2 bg-transparent text-sm text-content-primary placeholder-content-muted border-none focus:ring-0 focus:outline-none"
             />

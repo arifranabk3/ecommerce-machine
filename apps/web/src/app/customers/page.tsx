@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { useApiQuery } from '@/lib/api-client';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -16,13 +17,18 @@ import {
 } from 'lucide-react';
 
 export default function CustomersPage() {
-  const mockCustomers = [
-    { id: '1', name: 'Sarah Jenkins', email: 'sarah.j@example.com', location: 'San Francisco, CA', orders: 12, spent: '$1,240.00', lastActive: '2 hours ago', status: 'Active' },
-    { id: '2', name: 'Michael Chen', email: 'm.chen@tech.co', location: 'Seattle, WA', orders: 4, spent: '$890.50', lastActive: '5 hours ago', status: 'Active' },
-    { id: '3', name: 'Emma Thompson', email: 'emma@studio.design', location: 'London, UK', orders: 1, spent: '$45.00', lastActive: '1 day ago', status: 'New' },
-    { id: '4', name: 'David Wilson', email: 'dwilson99@gmail.com', location: 'Austin, TX', orders: 0, spent: '$0.00', lastActive: '2 days ago', status: 'Inactive' },
-    { id: '5', name: 'Alex Rivera', email: 'arivera@design.co', location: 'New York, NY', orders: 24, spent: '$3,490.99', lastActive: '1 week ago', status: 'VIP' },
-  ];
+  const [page, setPage] = React.useState(1);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  
+  const { data, isLoading } = useApiQuery<any>(`/api/v1/customers?page=${page}&limit=20${searchTerm ? `&search=${searchTerm}` : ''}`);
+  
+  const customers = data?.data?.items || [];
+  const total = data?.data?.total || 0;
+
+  const formatCurrency = (minor: number | undefined) => {
+    if (minor === undefined) return 'Rs 0';
+    return `Rs ${(minor / 100).toLocaleString()}`;
+  };
 
   return (
     <DashboardLayout>
@@ -71,6 +77,8 @@ export default function CustomersPage() {
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-content-muted" />
             <input
               type="text"
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
               placeholder="Search customers by name, email, or phone..."
               className="w-full pl-9 pr-4 py-2 bg-transparent text-sm text-content-primary placeholder-content-muted border-none focus:ring-0 focus:outline-none"
             />
@@ -97,59 +105,86 @@ export default function CustomersPage() {
               </tr>
             </Thead>
             <Tbody>
-              {mockCustomers.map((customer) => (
-                <Tr key={customer.id}>
-                  <Td className="pl-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-brand-50 border border-brand-100 flex items-center justify-center text-xs font-bold text-brand-600 shrink-0">
-                        {customer.name.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div>
-                        <div className="font-bold text-content-primary cursor-pointer hover:text-brand-600 transition-colors">{customer.name}</div>
-                        <div className="text-[10px] font-medium text-content-secondary mt-0.5 flex items-center gap-1">
-                          <Mail className="w-3 h-3" /> {customer.email}
+              {isLoading ? (
+                <Tr>
+                  <Td colSpan={7} className="text-center py-8 text-content-muted">Loading customers...</Td>
+                </Tr>
+              ) : customers.length === 0 ? (
+                <Tr>
+                  <Td colSpan={7} className="text-center py-8 text-content-muted">No customers found</Td>
+                </Tr>
+              ) : (
+                customers.map((customer: any) => (
+                  <Tr key={customer._id}>
+                    <Td className="pl-6">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-brand-50 border border-brand-100 flex items-center justify-center text-xs font-bold text-brand-600 shrink-0">
+                          {customer.displayName ? customer.displayName.substring(0, 2).toUpperCase() : 'NA'}
+                        </div>
+                        <div>
+                          <div className="font-bold text-content-primary cursor-pointer hover:text-brand-600 transition-colors">{customer.displayName || 'Unknown'}</div>
+                          <div className="text-[10px] font-medium text-content-secondary mt-0.5 flex items-center gap-1">
+                            <Mail className="w-3 h-3" /> {customer.email || 'No email'}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Td>
-                  <Td>
-                    <span className="text-[11px] font-bold text-content-secondary uppercase tracking-wider flex items-center gap-1.5">
-                      <MapPin className="w-3 h-3 text-content-muted" /> {customer.location}
-                    </span>
-                  </Td>
-                  <Td className="text-right">
-                    <span className="font-bold text-content-primary">{customer.orders}</span>
-                  </Td>
-                  <Td className="text-right">
-                    <span className="font-bold text-content-primary">{customer.spent}</span>
-                  </Td>
-                  <Td>
-                    <span className="text-xs font-medium text-content-secondary">{customer.lastActive}</span>
-                  </Td>
-                  <Td>
-                    <Badge variant={
-                      customer.status === 'Active' ? 'success' : 
-                      customer.status === 'VIP' ? 'info' :
-                      customer.status === 'New' ? 'warning' : 'neutral'
-                    }>
-                      {customer.status}
-                    </Badge>
-                  </Td>
-                  <Td className="text-right pr-6">
-                    <button className="text-content-muted hover:text-content-primary p-1.5 rounded-lg hover:bg-surface-secondary transition-colors">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-                  </Td>
-                </Tr>
-              ))}
+                    </Td>
+                    <Td>
+                      <span className="text-[11px] font-bold text-content-secondary uppercase tracking-wider flex items-center gap-1.5">
+                        <MapPin className="w-3 h-3 text-content-muted" /> {customer.address?.city || 'N/A'}
+                      </span>
+                    </Td>
+                    <Td className="text-right">
+                      <span className="font-bold text-content-primary">{customer.metrics?.totalOrders || 0}</span>
+                    </Td>
+                    <Td className="text-right">
+                      <span className="font-bold text-content-primary">{formatCurrency(customer.metrics?.totalSpentMinor || 0)}</span>
+                    </Td>
+                    <Td>
+                      <span className="text-xs font-medium text-content-secondary">
+                        {customer.metrics?.lastOrderDate ? new Date(customer.metrics.lastOrderDate).toLocaleDateString() : 'Never'}
+                      </span>
+                    </Td>
+                    <Td>
+                      <Badge variant={
+                        customer.status === 'ACTIVE' ? 'success' : 
+                        customer.status === 'ARCHIVED' ? 'neutral' : 'info'
+                      }>
+                        {customer.status || 'ACTIVE'}
+                      </Badge>
+                    </Td>
+                    <Td className="text-right pr-6">
+                      <button className="text-content-muted hover:text-content-primary p-1.5 rounded-lg hover:bg-surface-secondary transition-colors">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </Td>
+                  </Tr>
+                ))
+              )}
             </Tbody>
           </Table>
           
           <div className="p-4 border-t border-border flex items-center justify-between text-[11px] font-bold text-content-secondary bg-surface">
-            <div>Showing 1 to 5 of 12,482 customers</div>
+            <div>Showing {customers.length > 0 ? (page - 1) * 20 + 1 : 0} to {Math.min(page * 20, total)} of {total} customers</div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="h-7 text-[10px] bg-surface border-border" disabled>Previous</Button>
-              <Button variant="outline" size="sm" className="h-7 text-[10px] bg-surface border-border">Next</Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 text-[10px] bg-surface border-border" 
+                disabled={page <= 1}
+                onClick={() => setPage(p => p - 1)}
+              >
+                Previous
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 text-[10px] bg-surface border-border"
+                disabled={page * 20 >= total}
+                onClick={() => setPage(p => p + 1)}
+              >
+                Next
+              </Button>
             </div>
           </div>
         </div>
