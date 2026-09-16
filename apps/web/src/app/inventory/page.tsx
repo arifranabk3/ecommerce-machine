@@ -23,10 +23,10 @@ export default function InventoryPage() {
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
 
-  const { data: warehousesData } = useApiQuery<{ items: any[] }>('/api/v1/warehouses');
+  const { data: warehousesData } = useApiQuery<{ items: { _id: string, name: string }[] }>('/api/v1/warehouses');
   const warehouses = warehousesData?.items || [];
 
-  const { data, isLoading, error, mutate } = useApiQuery<{ items: any[], total: number, totalPages: number }>(
+  const { data, isLoading, error, mutate } = useApiQuery<{ items: { _id: string, productName: string, productSku: string, warehouseName: string, quantityAvailable: number, quantityReserved: number, reorderPoint: number, status: string }[], total: number, totalPages: number }>(
     `/api/v1/inventory?page=${page}&limit=20${searchTerm ? `&search=${searchTerm}` : ''}${selectedWarehouseId ? `&warehouseId=${selectedWarehouseId}` : ''}`
   );
 

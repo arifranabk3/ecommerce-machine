@@ -7,12 +7,12 @@ interface AdjustStockModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  warehouses: any[];
+  warehouses: { _id: string, name: string }[];
 }
 
 export function AdjustStockModal({ isOpen, onClose, onSuccess, warehouses }: AdjustStockModalProps) {
   const { trigger, isMutating } = useApiMutation('/api/v1/inventory/adjustments');
-  const { data: productsData } = useApiQuery<{ items: any[] }>('/api/v1/products?limit=100');
+  const { data: productsData } = useApiQuery<{ items: { _id: string, name: string, sku: string }[] }>('/api/v1/products?limit=100');
   
   const [formData, setFormData] = useState({
     productId: '',
@@ -39,8 +39,12 @@ export function AdjustStockModal({ isOpen, onClose, onSuccess, warehouses }: Adj
       await trigger({ method: 'POST', body: formData });
       onSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Failed to adjust stock');
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message || 'Failed to adjust stock');
+      } else {
+        setError('Failed to adjust stock');
+      }
     }
   };
 
@@ -60,7 +64,7 @@ export function AdjustStockModal({ isOpen, onClose, onSuccess, warehouses }: Adj
               required
             >
               <option value="">Select Product...</option>
-              {productsData?.items?.map((p: any) => (
+              {productsData?.items?.map(p => (
                 <option key={p._id} value={p._id}>{p.name} ({p.sku})</option>
               ))}
             </select>
@@ -86,7 +90,7 @@ export function AdjustStockModal({ isOpen, onClose, onSuccess, warehouses }: Adj
               type="number"
               name="quantityChange"
               value={formData.quantityChange}
-              onChange={handleChange as any}
+              onChange={handleChange as React.ChangeEventHandler<HTMLInputElement>}
               required
             />
           </div>

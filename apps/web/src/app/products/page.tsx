@@ -19,7 +19,7 @@ import { useApiQuery } from '@/lib/api-client';
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
-  const { data, error, isLoading } = useApiQuery<{ items: any[], total: number, totalPages: number }>(`/api/v1/products?page=${page}&limit=20${searchTerm ? `&search=${searchTerm}` : ''}`);
+  const { data, error, isLoading } = useApiQuery<{ items: { _id: string, name: string, sku: string, costPrice: number, sellingPrice: number, grossMarginPercentage?: number, status: string, updatedAt: string, images: string[] }[], total: number, totalPages: number }>(`/api/v1/products?page=${page}&limit=20${searchTerm ? `&search=${searchTerm}` : ''}`);
 
   const products = data?.items || [];
   const total = data?.total || 0;
@@ -29,7 +29,7 @@ export default function ProductsPage() {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
   };
 
-  const getMarginDisplay = (product: any) => {
+  const getMarginDisplay = (product: { costPrice: number; sellingPrice: number; grossMarginPercentage?: number }) => {
     const cost = product.costPrice;
     const price = product.sellingPrice;
     const margin = product.grossMarginPercentage;

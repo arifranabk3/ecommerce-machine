@@ -7,12 +7,12 @@ interface TransferStockModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  warehouses: any[];
+  warehouses: { _id: string, name: string }[];
 }
 
 export function TransferStockModal({ isOpen, onClose, onSuccess, warehouses }: TransferStockModalProps) {
   const { trigger, isMutating } = useApiMutation('/api/v1/inventory/transfers');
-  const { data: productsData } = useApiQuery<{ items: any[] }>('/api/v1/products?limit=100');
+  const { data: productsData } = useApiQuery<{ items: { _id: string, name: string, sku: string }[] }>('/api/v1/products?limit=100');
   
   const [formData, setFormData] = useState({
     productId: '',
@@ -48,8 +48,12 @@ export function TransferStockModal({ isOpen, onClose, onSuccess, warehouses }: T
       await trigger({ method: 'POST', body: formData });
       onSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Failed to transfer stock');
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message || 'Failed to transfer stock');
+      } else {
+        setError('Failed to transfer stock');
+      }
     }
   };
 
@@ -69,7 +73,7 @@ export function TransferStockModal({ isOpen, onClose, onSuccess, warehouses }: T
               required
             >
               <option value="">Select Product...</option>
-              {productsData?.items?.map((p: any) => (
+              {productsData?.items?.map(p => (
                 <option key={p._id} value={p._id}>{p.name} ({p.sku})</option>
               ))}
             </select>
@@ -110,7 +114,7 @@ export function TransferStockModal({ isOpen, onClose, onSuccess, warehouses }: T
               type="number"
               name="quantity"
               value={formData.quantity}
-              onChange={handleChange as any}
+              onChange={handleChange as React.ChangeEventHandler<HTMLInputElement>}
               min="1"
               required
             />
