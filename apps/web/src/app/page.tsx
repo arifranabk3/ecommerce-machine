@@ -37,14 +37,14 @@ import {
 import { useApiQuery } from '@/lib/api-client';
 
 export default function DashboardPage() {
-  const { data: overview, isLoading: overviewLoading } = useApiQuery<any>('/api/v1/analytics/overview');
+  const { data: overview, isLoading: overviewLoading, isError: overviewError } = useApiQuery<any>('/api/v1/analytics/overview');
   const { data: customersStats } = useApiQuery<any>('/api/v1/analytics/customers');
-  const { data: customersData, isLoading: customersLoading } = useApiQuery<any>('/api/v1/customers?limit=5');
-  const { data: ordersData, isLoading: ordersLoading } = useApiQuery<any>('/api/v1/orders?limit=5');
-  const { data: productsData, isLoading: productsLoading } = useApiQuery<any>('/api/v1/products?limit=5');
-  const { data: inventoryHealth, isLoading: inventoryLoading } = useApiQuery<any>('/api/v1/analytics/inventory');
+  const { data: customersData, isLoading: customersLoading, isError: customersError } = useApiQuery<any>('/api/v1/customers?limit=5');
+  const { data: ordersData, isLoading: ordersLoading, isError: ordersError } = useApiQuery<any>('/api/v1/orders?limit=5');
+  const { data: productsData, isLoading: productsLoading, isError: productsError } = useApiQuery<any>('/api/v1/products?limit=5');
+  const { data: inventoryHealth, isLoading: inventoryLoading, isError: inventoryError } = useApiQuery<any>('/api/v1/analytics/inventory');
   const { data: automationData } = useApiQuery<any>('/api/v1/analytics/automation');
-  const { data: financeOverview } = useApiQuery<any>('/api/v1/finance');
+  const { data: financeOverview, isError: financeError } = useApiQuery<any>('/api/v1/finance');
 
   const ordersList = ordersData?.data || [];
   const productsList = productsData?.data || [];
@@ -90,6 +90,23 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* System Error Alerts */}
+        {(overviewError || financeError) && (
+          <div className="bg-danger-subtle border border-danger p-4 rounded-xl flex items-center justify-between shadow-sm">
+            <div>
+              <h3 className="text-danger-text font-extrabold text-sm flex items-center gap-2">
+                <Activity className="w-4 h-4" /> API FETCH ERROR
+              </h3>
+              <p className="text-danger-text/80 text-xs mt-1 font-medium">
+                Unable to fetch live dashboard metrics. Data displayed below may be incomplete.
+              </p>
+            </div>
+            <button onClick={() => window.location.reload()} className="px-3 py-1.5 bg-danger text-white rounded-lg text-xs font-bold shadow-sm hover:opacity-90">
+              Retry
+            </button>
+          </div>
+        )}
 
         {/* Critical Alerts */}
         {(hasCashWarning || automationData?.failedRuns > 0) && (
