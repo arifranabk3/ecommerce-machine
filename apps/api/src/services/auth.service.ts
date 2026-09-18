@@ -28,6 +28,7 @@ export class AuthService {
     const ownerRole = await RoleModel.create({
       tenantId,
       name: 'Owner',
+      normalizedName: 'OWNER',
       description: 'Tenant business owner full authority',
       permissions: ['*'],
       systemRole: true

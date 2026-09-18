@@ -22,7 +22,7 @@ export default function LoginPage() {
     setErrorMessage('');
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
       const res = await fetch(`${baseUrl}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -43,6 +43,7 @@ export default function LoginPage() {
       // Save token securely
       if (data.data?.token) {
         localStorage.setItem('sellzy_token', data.data.token);
+        localStorage.setItem('sellzy_store_id', `store-${tenantSlug}`);
         setSuccessMessage('Login successful! Redirecting to dashboard...');
         setTimeout(() => {
           window.location.href = '/';

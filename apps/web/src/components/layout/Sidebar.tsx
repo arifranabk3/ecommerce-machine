@@ -45,7 +45,6 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
   ];
   
   const platformNav = [
-    { name: 'Domains', href: '/settings/domains', icon: Globe },
     { name: 'Billing', href: '/settings/subscription', icon: Receipt },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];

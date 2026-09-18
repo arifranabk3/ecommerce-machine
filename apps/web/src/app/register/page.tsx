@@ -22,7 +22,7 @@ export default function RegisterPage() {
     setErrorMessage('');
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
       const res = await fetch(`${baseUrl}/api/v1/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
