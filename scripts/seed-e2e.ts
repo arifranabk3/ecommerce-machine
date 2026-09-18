@@ -59,7 +59,9 @@ async function seedE2E() {
       adminEmail: email,
       password: 'TestPassword123!',
       businessName: 'E2E Test Business',
-      slug
+      slug,
+      timezone: 'UTC',
+      currency: 'USD'
     });
 
     const tenantId = authResult.tenant.tenantId;
@@ -67,7 +69,7 @@ async function seedE2E() {
 
     console.log('Provisioning E2E Store...');
     const store = await StoreModel.create({
-      storeId: `st_${Date.now()}`,
+      storeId: `store-${slug}`,
       tenantId,
       name: 'E2E Main Store',
       slug: 'e2e-main-store',

@@ -22,7 +22,7 @@ const sessionSchema = new Schema<ISessionDocument>({
   userAgent: { type: String },
   ipAddress: { type: String },
   lastActivityAt: { type: Date, default: Date.now },
-  expiresAt: { type: Date, required: true, index: true },
+  expiresAt: { type: Date, required: true },
   revokedAt: { type: Date },
   revokeReason: { type: String }
 }, {

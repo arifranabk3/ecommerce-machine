@@ -23,7 +23,7 @@ const invitationSchema = new Schema<IInvitationDocument>({
     default: 'PENDING',
     index: true 
   },
-  expiresAt: { type: Date, required: true, index: true },
+  expiresAt: { type: Date, required: true },
   invitedBy: { type: String, required: true }
 }, {
   timestamps: true
