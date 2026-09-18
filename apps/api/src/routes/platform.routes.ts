@@ -9,6 +9,7 @@ import { FeatureFlagModel } from '../models/FeatureFlag';
 import { PlatformSettingsModel } from '../models/PlatformSettings';
 import { PlatformHealthService } from '../services/PlatformHealthService';
 import { PlatformAuditService } from '../services/PlatformAuditService';
+import { TenantModel } from '../models/Tenant';
 
 const router = Router();
 
@@ -47,10 +48,20 @@ function requirePlatformPermission(permissionKey: string) {
  */
 router.get('/tenants', requirePlatformPermission('platform.tenants.view'), async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const tenants = await UserModel.aggregate([
-      { $group: { _id: '$tenantId', userCount: { $sum: 1 }, createdAt: { $min: '$createdAt' } } },
-      { $sort: { createdAt: -1 } }
+    const tenantsData = await TenantModel.find().sort({ createdAt: -1 }).lean();
+    
+    // Get user counts
+    const userCounts = await UserModel.aggregate([
+      { $group: { _id: '$tenantId', userCount: { $sum: 1 } } }
     ]);
+    
+    const countMap = new Map(userCounts.map(u => [u._id, u.userCount]));
+    
+    const tenants = tenantsData.map(t => ({
+      ...t,
+      userCount: countMap.get(t.tenantId) || 0
+    }));
+
     res.json({ success: true, tenants });
   } catch (err) {
     next(err);

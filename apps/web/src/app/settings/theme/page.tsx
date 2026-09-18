@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Palette, CheckCircle2, Search, Filter } from 'lucide-react';
+import { useApiQuery } from '@/lib/api-client';
 
 // Mocked from the Theme Registry (in production this would be fetched from API)
 const THEME_CATEGORIES = [
@@ -24,6 +25,16 @@ export default function ThemeSelectionPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedThemeId, setSelectedThemeId] = useState<string>('moduva'); // Default active theme
   const [isSaving, setIsSaving] = useState(false);
+  
+  const { data: configsData, mutate } = useApiQuery<any>('/api/v1/storefront/themes');
+  const configs = configsData || [];
+  
+  useEffect(() => {
+    if (configs && Array.isArray(configs)) {
+      const active = configs.find(c => c.isPublished);
+      if (active) setSelectedThemeId(active.themeId);
+    }
+  }, [configs]);
 
   // Filter themes dynamically based on selected category
   const filteredThemes = useMemo(() => {
@@ -31,13 +42,25 @@ export default function ThemeSelectionPage() {
     return THEMES.filter(t => t.categories.includes(selectedCategory));
   }, [selectedCategory]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
-    // Simulate API call to save theme selection
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      const token = localStorage.getItem('sellzy_token');
+      const res = await fetch(`/api/v1/storefront/themes/${selectedThemeId}/publish`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+      if (!res.ok) throw new Error('Failed to publish');
+      await mutate();
       alert('Theme updated successfully. Your storefront is now using: ' + selectedThemeId);
-    }, 800);
+    } catch (err) {
+      alert('Failed to update theme.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (

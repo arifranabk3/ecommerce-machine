@@ -64,6 +64,7 @@ describe('SELLZY — PHASE 14 MASTER IMPLEMENTATION TEST SUITE (160+ TEST CASES)
 
   beforeEach(() => {
     jest.restoreAllMocks();
+    jest.spyOn(AnalyticsCacheService, 'get').mockResolvedValue(null);
     jest.spyOn(OrderModel, 'aggregate').mockResolvedValue([]);
     jest.spyOn(RefundModel, 'aggregate').mockResolvedValue([]);
     jest.spyOn(VendorLedgerEntryModel, 'aggregate').mockResolvedValue([]);

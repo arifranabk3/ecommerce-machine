@@ -6,31 +6,15 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 
-export default function VendorReturnsPage({ params }: { params: { id: string } }) {
-  const [loading] = useState(false);
-  const [search, setSearch] = useState('');
+import { useApiQuery } from '@/lib/api-client';
+import { useParams } from 'next/navigation';
 
-  // Mock data representing Return/RTO for this vendor
-  const mockReturns = [
-    {
-      id: 'RET-5591',
-      rtoNumber: 'RTO-2024-001',
-      shipmentId: 'SHP-9921',
-      status: 'INITIATED',
-      reason: 'Defective Items in Batch',
-      itemCount: 15,
-      createdAt: '2024-10-10T09:15:00Z',
-    },
-    {
-      id: 'RET-5594',
-      rtoNumber: 'RTO-2024-002',
-      shipmentId: 'SHP-9955',
-      status: 'DELIVERED',
-      reason: 'Wrong SKU Supplied',
-      itemCount: 2,
-      createdAt: '2024-10-12T11:45:00Z',
-    }
-  ];
+export default function VendorReturnsPage() {
+  const params = useParams();
+  const [search, setSearch] = useState('');
+  
+  const { data: returnsData, isLoading } = useApiQuery<any>(`/api/v1/shipping/rto?vendorId=${params.id}`);
+  const returns = returnsData?.items || returnsData?.data?.items || returnsData?.data || returnsData || [];
 
   return (
     <DashboardLayout>
@@ -79,7 +63,7 @@ export default function VendorReturnsPage({ params }: { params: { id: string } }
               Payments
             </Link>
             <Link href={`/vendors/${params.id}/returns`} className="whitespace-nowrap pb-4 px-1 border-b-2 border-[#A9C2B9] font-medium text-sm text-[#A9C2B9]">
-              Returns ({mockReturns.length})
+              Returns ({returns.length})
             </Link>
             <Link href={`/vendors/${params.id}/documents`} className="whitespace-nowrap pb-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
               Documents
@@ -113,7 +97,7 @@ export default function VendorReturnsPage({ params }: { params: { id: string } }
 
         {/* Returns Table */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          {loading ? (
+          {isLoading ? (
              <div className="p-8 text-center text-gray-500">Loading returns...</div>
           ) : (
             <table className="w-full text-left text-sm text-gray-600">
@@ -121,7 +105,6 @@ export default function VendorReturnsPage({ params }: { params: { id: string } }
                 <tr>
                   <th className="px-6 py-4">RTO / Reference</th>
                   <th className="px-6 py-4">Shipment ID</th>
-                  <th className="px-6 py-4">Items</th>
                   <th className="px-6 py-4">Reason</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4">Created Date</th>
@@ -129,23 +112,20 @@ export default function VendorReturnsPage({ params }: { params: { id: string } }
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {mockReturns.length === 0 ? (
+                {returns.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
+                    <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                       No returns or RTOs found for this vendor.
                     </td>
                   </tr>
                 ) : (
-                  mockReturns.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50/50 transition">
+                  returns.map((item: any) => (
+                    <tr key={item._id} className="hover:bg-gray-50/50 transition">
                       <td className="px-6 py-4">
                         <p className="font-mono text-xs text-gray-900">{item.rtoNumber}</p>
                       </td>
                       <td className="px-6 py-4 font-mono text-xs text-gray-500">
                         {item.shipmentId}
-                      </td>
-                      <td className="px-6 py-4 text-gray-900">
-                        {item.itemCount} units
                       </td>
                       <td className="px-6 py-4 text-gray-600 max-w-xs truncate">
                         {item.reason}
@@ -159,7 +139,7 @@ export default function VendorReturnsPage({ params }: { params: { id: string } }
                         </span>
                       </td>
                       <td className="px-6 py-4 text-gray-500">
-                        {new Date(item.createdAt).toLocaleDateString()}
+                        {new Date(item.initiatedAt || item.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <button className="text-[#A9C2B9] hover:underline font-medium text-sm">
@@ -175,9 +155,9 @@ export default function VendorReturnsPage({ params }: { params: { id: string } }
         </div>
         
         {/* Pagination Placeholder */}
-        {!loading && mockReturns.length > 0 && (
+        {!isLoading && returns.length > 0 && (
           <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-            <div>Showing 1 to {mockReturns.length} of {mockReturns.length} entries</div>
+            <div>Showing 1 to {returns.length} of {returns.length} entries</div>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" disabled>Previous</Button>
               <Button variant="outline" size="sm" disabled>Next</Button>

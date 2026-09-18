@@ -21,9 +21,12 @@ export default function CustomersPage() {
   const [searchTerm, setSearchTerm] = React.useState('');
   
   const { data, isLoading } = useApiQuery<any>(`/api/v1/customers?page=${page}&limit=20${searchTerm ? `&search=${searchTerm}` : ''}`);
+  const { data: analyticsData } = useApiQuery<any>('/api/v1/analytics/customers');
   
   const customers = data?.data?.items || [];
   const total = data?.data?.total || 0;
+  
+  const kpis = analyticsData?.data || { totalCustomers: 0, repeatCustomers: 0, averageLtvMinor: 0, repeatPurchaseRate: 0 };
 
   const formatCurrency = (minor: number | undefined) => {
     if (minor === undefined) return 'Rs 0';
@@ -56,10 +59,10 @@ export default function CustomersPage() {
         {/* Top KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {[
-            { title: 'Total Customers', value: '12,482', change: '+124 this week' },
-            { title: 'Active (30d)', value: '4,291', change: '+18% vs last month' },
-            { title: 'Average CLV', value: '$342.50', change: '+4.2% vs last year' },
-            { title: 'Repeat Rate', value: '38.4%', change: '-1.2% vs last month' },
+            { title: 'Total Customers', value: kpis.totalCustomers.toLocaleString(), change: 'Lifetime' },
+            { title: 'Repeat Customers', value: (kpis.repeatCustomers || 0).toLocaleString(), change: '2+ Orders' },
+            { title: 'Average CLV', value: formatCurrency(kpis.averageLtvMinor), change: 'Per Customer' },
+            { title: 'Repeat Rate', value: `${kpis.repeatPurchaseRate}%`, change: 'Overall' },
           ].map((kpi, i) => (
             <div key={i} className="bg-surface p-6 flex flex-col justify-between hover:shadow-premium transition-shadow rounded-xl border border-border shadow-sm">
               <h3 className="text-[11px] font-bold text-content-muted uppercase tracking-widest mb-4">{kpi.title}</h3>

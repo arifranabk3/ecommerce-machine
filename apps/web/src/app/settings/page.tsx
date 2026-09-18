@@ -19,8 +19,11 @@ import {
   Search,
   ArrowRight
 } from 'lucide-react';
+import { useApiQuery } from '@/lib/api-client';
 
 export default function SettingsHubPage() {
+  const { data: usageData, isLoading } = useApiQuery<any>('/api/v1/billing/usage');
+  const planSlug = usageData?.usage?.planSlug || usageData?.data?.usage?.planSlug || 'STARTER';
   const settingCategories = [
     {
       title: "Business Settings",
@@ -134,10 +137,12 @@ export default function SettingsHubPage() {
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h2 className="text-lg font-bold text-content-primary tracking-tight">Enterprise Plan</h2>
+                  <h2 className="text-lg font-bold text-content-primary tracking-tight">
+                    {isLoading ? 'Loading...' : `${planSlug} Plan`}
+                  </h2>
                   <Badge variant="success">Active</Badge>
                 </div>
-                <p className="text-sm font-medium text-content-secondary">Your next billing date is October 4, 2026 for $499.00.</p>
+                <p className="text-sm font-medium text-content-secondary">Manage your billing and resources.</p>
               </div>
             </div>
             <Link href="/settings/subscription">

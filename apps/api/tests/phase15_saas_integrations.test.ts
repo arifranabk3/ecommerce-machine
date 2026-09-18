@@ -112,9 +112,15 @@ describe('SELLZY — PHASE 15 MASTER IMPLEMENTATION TEST SUITE (165 TEST CASES)'
 
     it('1.2 Platform Super Admin can fetch tenants list', async () => {
       jest.spyOn(UserModel, 'aggregate').mockResolvedValue([{ _id: tenantA, userCount: 5 }]);
+      const mockTenantFind = jest.spyOn(require('../src/models/Tenant').TenantModel, 'find').mockReturnValue({
+        sort: jest.fn().mockReturnValue({
+          lean: jest.fn().mockResolvedValue([{ tenantId: tenantA, businessName: 'Acme' }])
+        })
+      });
       const res = await request(app).get('/api/v1/platform/tenants').set('Authorization', `Bearer ${tokenSuperAdmin}`);
       expect(res.status).toBe(200);
       expect(res.body.tenants.length).toBe(1);
+      mockTenantFind.mockRestore();
     });
 
     it('1.3 Tenant A API keys cannot be retrieved by Tenant B token', async () => {

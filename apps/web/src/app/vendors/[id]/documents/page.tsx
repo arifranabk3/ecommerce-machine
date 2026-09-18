@@ -6,30 +6,16 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 
-export default function VendorDocumentsPage({ params }: { params: { id: string } }) {
-  const [loading] = useState(false);
+import { useApiQuery } from '@/lib/api-client';
+import { useParams } from 'next/navigation';
+
+export default function VendorDocumentsPage() {
+  const params = useParams();
   const [search, setSearch] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
-  // Mock data representing VendorDocuments
-  const mockDocuments = [
-    {
-      id: 'DOC-1029',
-      title: 'Supplier Master Agreement 2024',
-      fileType: 'application/pdf',
-      fileSize: 2450000, // 2.45 MB
-      uploadedBy: 'Admin User',
-      createdAt: '2024-01-15T10:30:00Z',
-    },
-    {
-      id: 'DOC-1030',
-      title: 'Tax Registration Certificate',
-      fileType: 'image/png',
-      fileSize: 850000, // 850 KB
-      uploadedBy: 'Vendor Portal',
-      createdAt: '2024-01-16T14:20:00Z',
-    }
-  ];
+  const { data: vendorData, isLoading } = useApiQuery<any>(`/api/v1/vendors/${params.id}`);
+  const documents = vendorData?.documents || [];
 
   const handleMockUpload = () => {
     setIsUploading(true);
@@ -99,7 +85,7 @@ export default function VendorDocumentsPage({ params }: { params: { id: string }
               Returns
             </Link>
             <Link href={`/vendors/${params.id}/documents`} className="whitespace-nowrap pb-4 px-1 border-b-2 border-[#A9C2B9] font-medium text-sm text-[#A9C2B9]">
-              Documents ({mockDocuments.length})
+              Documents ({documents.length})
             </Link>
           </nav>
         </div>
@@ -120,7 +106,7 @@ export default function VendorDocumentsPage({ params }: { params: { id: string }
 
         {/* Documents Table */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          {loading ? (
+          {isLoading ? (
              <div className="p-8 text-center text-gray-500">Loading documents...</div>
           ) : (
             <table className="w-full text-left text-sm text-gray-600">
@@ -134,22 +120,22 @@ export default function VendorDocumentsPage({ params }: { params: { id: string }
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {mockDocuments.length === 0 ? (
+                {documents.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                       No documents found for this vendor.
                     </td>
                   </tr>
                 ) : (
-                  mockDocuments.map((doc) => (
-                    <tr key={doc.id} className="hover:bg-gray-50/50 transition">
+                  documents.map((doc: any) => (
+                    <tr key={doc._id} className="hover:bg-gray-50/50 transition">
                       <td className="px-6 py-4">
                         <p className="font-medium text-gray-900">{doc.title}</p>
-                        <p className="font-mono text-xs text-gray-400 mt-0.5">{doc.id}</p>
+                        <p className="font-mono text-xs text-gray-400 mt-0.5">{doc._id.substring(0,8).toUpperCase()}</p>
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-gray-900">{doc.fileType.split('/')[1]?.toUpperCase() || 'Unknown'}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{formatFileSize(doc.fileSize)}</p>
+                        <p className="text-gray-900">{doc.fileType?.split('/')[1]?.toUpperCase() || 'Unknown'}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{doc.fileSize ? formatFileSize(doc.fileSize) : 'N/A'}</p>
                       </td>
                       <td className="px-6 py-4 text-gray-900">
                         {doc.uploadedBy}
@@ -158,12 +144,11 @@ export default function VendorDocumentsPage({ params }: { params: { id: string }
                         {new Date(doc.createdAt).toLocaleDateString()}
                       </td>
                       <td className="px-6 py-4 text-right space-x-3">
-                        <button className="text-gray-500 hover:text-gray-900 font-medium text-sm transition">
-                          View
-                        </button>
-                        <button className="text-[#A9C2B9] hover:underline font-medium text-sm transition">
-                          Download
-                        </button>
+                        {doc.url && (
+                          <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-[#A9C2B9] hover:underline font-medium text-sm transition">
+                            View / Download
+                          </a>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -174,9 +159,9 @@ export default function VendorDocumentsPage({ params }: { params: { id: string }
         </div>
         
         {/* Pagination Placeholder */}
-        {!loading && mockDocuments.length > 0 && (
+        {!isLoading && documents.length > 0 && (
           <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-            <div>Showing 1 to {mockDocuments.length} of {mockDocuments.length} entries</div>
+            <div>Showing 1 to {documents.length} of {documents.length} entries</div>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" disabled>Previous</Button>
               <Button variant="outline" size="sm" disabled>Next</Button>

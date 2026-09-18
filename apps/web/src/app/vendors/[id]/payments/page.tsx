@@ -6,35 +6,15 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 
-export default function VendorPaymentsPage({ params }: { params: { id: string } }) {
-  const [loading] = useState(false);
-  const [search, setSearch] = useState('');
+import { useApiQuery } from '@/lib/api-client';
+import { useParams } from 'next/navigation';
 
-  // Mock data for UI structure aligned with VendorPayment model
-  const mockPayments = [
-    {
-      id: 'PAY-8821',
-      settlementId: 'STL-9012',
-      paymentReference: 'TRX-10293847',
-      amountMinor: 1225000,
-      currency: 'PKR',
-      status: 'PAID',
-      provider: 'BANK_TRANSFER',
-      providerTransactionId: 'BNK-9928172',
-      paidAt: '2024-10-18T14:30:00Z',
-    },
-    {
-      id: 'PAY-8825',
-      settlementId: 'STL-9013',
-      paymentReference: 'TRX-10293999',
-      amountMinor: 1840000,
-      currency: 'PKR',
-      status: 'PROCESSING',
-      provider: 'BANK_TRANSFER',
-      providerTransactionId: '',
-      paidAt: null,
-    }
-  ];
+export default function VendorPaymentsPage() {
+  const params = useParams();
+  const [search, setSearch] = useState('');
+  
+  const { data: paymentsData, isLoading } = useApiQuery<any>(`/api/v1/vendor-payments?vendorId=${params.id}`);
+  const payments = paymentsData?.items || paymentsData?.data?.items || paymentsData?.data || paymentsData || [];
 
   return (
     <DashboardLayout>
@@ -80,7 +60,7 @@ export default function VendorPaymentsPage({ params }: { params: { id: string } 
               Settlements
             </Link>
             <Link href={`/vendors/${params.id}/payments`} className="whitespace-nowrap pb-4 px-1 border-b-2 border-[#A9C2B9] font-medium text-sm text-[#A9C2B9]">
-              Payments ({mockPayments.length})
+              Payments ({payments.length})
             </Link>
             <Link href={`/vendors/${params.id}/returns`} className="whitespace-nowrap pb-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
               Returns
@@ -116,7 +96,7 @@ export default function VendorPaymentsPage({ params }: { params: { id: string } 
 
         {/* Payments Table */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          {loading ? (
+          {isLoading ? (
              <div className="p-8 text-center text-gray-500">Loading payments...</div>
           ) : (
             <table className="w-full text-left text-sm text-gray-600">
@@ -132,26 +112,26 @@ export default function VendorPaymentsPage({ params }: { params: { id: string } 
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {mockPayments.length === 0 ? (
+                {payments.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                       No payments found for this vendor.
                     </td>
                   </tr>
                 ) : (
-                  mockPayments.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50/50 transition">
+                  payments.map((item: any) => (
+                    <tr key={item._id} className="hover:bg-gray-50/50 transition">
                       <td className="px-6 py-4">
                         <p className="font-mono text-xs text-gray-900">{item.paymentReference}</p>
                       </td>
                       <td className="px-6 py-4 font-mono text-xs text-gray-500">
-                        <Link href={`/vendors/${params.id}/settlements`} className="hover:text-[#A9C2B9] transition">{item.settlementId}</Link>
+                        <Link href={`/vendors/${params.id}/settlements`} className="hover:text-[#A9C2B9] transition">{item.settlementId?.substring(0,8).toUpperCase()}</Link>
                       </td>
                       <td className="px-6 py-4 font-medium text-gray-900">
                         {item.currency} {(item.amountMinor / 100).toFixed(2)}
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-gray-900">{item.provider.replace('_', ' ')}</p>
+                        <p className="text-gray-900">{item.provider?.replace('_', ' ')}</p>
                         {item.providerTransactionId && <p className="text-xs text-gray-400 font-mono mt-0.5">{item.providerTransactionId}</p>}
                       </td>
                       <td className="px-6 py-4">
@@ -180,9 +160,9 @@ export default function VendorPaymentsPage({ params }: { params: { id: string } 
         </div>
         
         {/* Pagination Placeholder */}
-        {!loading && mockPayments.length > 0 && (
+        {!isLoading && payments.length > 0 && (
           <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-            <div>Showing 1 to {mockPayments.length} of {mockPayments.length} entries</div>
+            <div>Showing 1 to {payments.length} of {payments.length} entries</div>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" disabled>Previous</Button>
               <Button variant="outline" size="sm" disabled>Next</Button>

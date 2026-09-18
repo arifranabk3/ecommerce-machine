@@ -17,6 +17,7 @@ export class ProductController {
       const search = req.query.search as string;
       const categoryId = req.query.categoryId as string;
       const status = req.query.status as string;
+      const vendorId = req.query.vendorId as string;
       const includeArchived = req.query.includeArchived === 'true';
 
       const result = await ProductService.getProducts(tenantId, {
@@ -25,6 +26,7 @@ export class ProductController {
         search,
         categoryId,
         status,
+        vendorId,
         includeArchived
       });
 

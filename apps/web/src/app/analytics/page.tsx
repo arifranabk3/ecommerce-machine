@@ -44,9 +44,9 @@ export default function AnalyticsDashboardPage() {
   const { data: customerData, mutate: refetchCustomers, isLoading: loadingCustomers } = useApiQuery<any>(`/api/v1/analytics/customers?${queryParams}`);
   const { data: productsData, mutate: refetchProducts, isLoading: loadingProducts } = useApiQuery<any>(`/api/v1/products?limit=5`);
 
-  const overview = overviewData?.data || {};
-  const customers = customerData?.data || {};
-  const topProducts = productsData?.data?.items || [];
+  const overview = overviewData || {};
+  const customers = customerData || {};
+  const topProducts = productsData?.items || productsData?.data?.items || productsData?.data || [];
 
   const handleRefresh = () => {
     refetchOverview();

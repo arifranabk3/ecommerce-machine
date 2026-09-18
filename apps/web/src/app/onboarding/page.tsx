@@ -32,6 +32,8 @@ import {
   Mail,
   Activity
 } from 'lucide-react';
+import { useApiQuery, useApiMutation } from '@/lib/api-client';
+import { useRouter } from 'next/navigation';
 
 const STEPS = [
   { id: 'account', title: 'Account', icon: User },
@@ -49,9 +51,14 @@ const STEPS = [
 ];
 
 export default function OnboardingPage() {
+  const router = useRouter();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set(['account']));
   const [isLaunched, setIsLaunched] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const { data: user, isLoading } = useApiQuery<any>('/api/v1/auth/me');
+  const { trigger: provisionTenant, isMutating: isProvisioning } = useApiMutation('/api/v1/tenant/provision');
 
   const [formData, setFormData] = useState({
     businessName: '',
@@ -78,11 +85,32 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleLaunch = () => {
-    const stepId = STEPS[currentStepIndex].id;
-    setCompletedSteps(prev => new Set(Array.from(prev).concat(stepId)));
-    setIsLaunched(true);
-    window.scrollTo(0, 0);
+  const handleLaunch = async () => {
+    setErrorMsg('');
+    try {
+      const res: any = await provisionTenant({
+        method: 'POST',
+        body: {
+          businessName: formData.businessName,
+          storeName: formData.storeName,
+          storeSlug: formData.storeSlug,
+          country: formData.country,
+          currency: formData.currency,
+          themeId: formData.theme?.id
+        }
+      });
+      // Set local storage store id context
+      if (res?.store?.storeId) {
+        localStorage.setItem('sellzy_store_id', res.store.storeId);
+      }
+      
+      const stepId = STEPS[currentStepIndex].id;
+      setCompletedSteps(prev => new Set(Array.from(prev).concat(stepId)));
+      setIsLaunched(true);
+      window.scrollTo(0, 0);
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to provision store');
+    }
   };
 
   const currentStep = STEPS[currentStepIndex];
@@ -134,10 +162,10 @@ export default function OnboardingPage() {
           </Card>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button variant="primary" className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-6 px-8 shadow-md w-full sm:w-auto text-base">
+            <Button variant="primary" className="bg-brand-600 hover:bg-brand-700 text-white font-bold py-6 px-8 shadow-md w-full sm:w-auto text-base" onClick={() => router.push('/')}>
               Go to Dashboard
             </Button>
-            <Button variant="outline" className="bg-white border-slate-200 text-slate-700 font-bold py-6 px-8 shadow-sm w-full sm:w-auto text-base hover:bg-slate-50">
+            <Button variant="outline" className="bg-white border-slate-200 text-slate-700 font-bold py-6 px-8 shadow-sm w-full sm:w-auto text-base hover:bg-slate-50" onClick={() => window.open(`http://${formData.storeSlug}.localhost:3000`, '_blank')}>
               View Storefront
             </Button>
           </div>
@@ -162,10 +190,10 @@ export default function OnboardingPage() {
           <div className="flex items-center gap-4">
             <div className="text-right hidden md:block">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Owner</p>
-              <p className="text-sm font-bold text-slate-900">Arif Rana</p>
+              <p className="text-sm font-bold text-slate-900">{user?.name || 'Loading...'}</p>
             </div>
-            <div className="w-10 h-10 bg-brand-50 text-brand-700 rounded-full flex items-center justify-center font-bold border border-brand-100">
-              AR
+            <div className="w-10 h-10 bg-brand-50 text-brand-700 rounded-full flex items-center justify-center font-bold border border-brand-100 uppercase">
+              {user?.name?.substring(0, 2) || 'US'}
             </div>
           </div>
         </div>
@@ -271,17 +299,17 @@ export default function OnboardingPage() {
                     <ShieldCheck className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
                     <div>
                       <h3 className="font-extrabold text-emerald-900 text-base">Your account is fully secured and ready.</h3>
-                      <p className="text-sm font-medium text-emerald-800 mt-1">Logged in as arif@sellzy.shop</p>
+                      <p className="text-sm font-medium text-emerald-800 mt-1">Logged in as {user?.email || 'Loading...'}</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-sm font-bold text-slate-700">Full Name</label>
-                      <input type="text" value="Arif Rana" disabled className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-500 font-medium" />
+                      <input type="text" value={user?.name || ''} disabled className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-500 font-medium" />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-sm font-bold text-slate-700">Email Address</label>
-                      <input type="email" value="arif@sellzy.shop" disabled className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-500 font-medium" />
+                      <input type="email" value={user?.email || ''} disabled className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-500 font-medium" />
                     </div>
                   </div>
                 </div>
@@ -678,6 +706,12 @@ export default function OnboardingPage() {
                   <p className="text-center text-sm font-bold text-slate-500">
                     Everything looks good! Your store is ready to launch.
                   </p>
+                  
+                  {errorMsg && (
+                    <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-200 text-sm font-bold">
+                      {errorMsg}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -701,8 +735,8 @@ export default function OnboardingPage() {
                 )}
                 
                 {currentStep.id === 'launch' ? (
-                  <Button variant="primary" className="bg-brand-600 hover:bg-brand-700 text-white font-bold px-8 shadow-md" onClick={handleLaunch}>
-                    Launch Store <Rocket className="w-4 h-4 ml-2" />
+                  <Button variant="primary" className="bg-brand-600 hover:bg-brand-700 text-white font-bold px-8 shadow-md" onClick={handleLaunch} disabled={isProvisioning}>
+                    {isProvisioning ? 'Launching...' : 'Launch Store'} <Rocket className="w-4 h-4 ml-2" />
                   </Button>
                 ) : (
                   <Button 

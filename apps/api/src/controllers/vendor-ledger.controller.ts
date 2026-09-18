@@ -25,9 +25,11 @@ export class VendorLedgerController {
 
       return res.status(200).json({
         success: true,
-        data: entries,
-        balance,
-        pagination: { total, page: Number(page), limit: Number(limit) }
+        data: {
+          items: entries,
+          balance,
+          pagination: { total, page: Number(page), limit: Number(limit) }
+        }
       });
     } catch (err: any) {
       return res.status(500).json({ success: false, error: err.message });
@@ -190,7 +192,12 @@ export class VendorSettlementController {
   static async getPayments(req: Request, res: Response) {
     try {
       const tenantId = (req as any).tenantId;
-      const payments = await VendorPaymentModel.find({ tenantId }).sort({ createdAt: -1 });
+      const { vendorId } = req.query;
+      
+      const filter: any = { tenantId };
+      if (vendorId) filter.vendorId = vendorId;
+      
+      const payments = await VendorPaymentModel.find(filter).sort({ createdAt: -1 });
       return res.status(200).json({ success: true, data: payments });
     } catch (err: any) {
       return res.status(500).json({ success: false, error: err.message });

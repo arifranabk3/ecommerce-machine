@@ -217,7 +217,12 @@ export class ShippingController {
   static async getRTOList(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const tenantId = (req as any).tenantId;
-      const data = await ReturnToOriginModel.find({ tenantId }).sort({ createdAt: -1 });
+      const { vendorId } = req.query;
+
+      const filter: any = { tenantId };
+      if (vendorId) filter.vendorId = vendorId;
+
+      const data = await ReturnToOriginModel.find(filter).sort({ createdAt: -1 });
       res.status(200).json({ data });
     } catch (err: any) {
       next(err);

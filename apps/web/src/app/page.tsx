@@ -46,9 +46,9 @@ export default function DashboardPage() {
   const { data: automationData } = useApiQuery<any>('/api/v1/analytics/automation');
   const { data: financeOverview, error: financeError } = useApiQuery<any>('/api/v1/finance');
 
-  const ordersList = ordersData?.data || [];
-  const productsList = productsData?.data || [];
-  const customersList = customersData?.data || [];
+  const ordersList = ordersData?.items || ordersData?.data?.items || ordersData?.data || [];
+  const productsList = productsData?.items || productsData?.data?.items || productsData?.data || [];
+  const customersList = customersData?.items || customersData?.data?.items || customersData?.data || [];
 
   const formatCurrency = (minor: number | undefined) => {
     if (minor === undefined) return 'Rs 0';
@@ -148,11 +148,11 @@ export default function DashboardPage() {
         {/* High-Level KPIs */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {[
-            { label: 'Revenue', value: overviewLoading ? '...' : formatCurrency(overview?.netSalesMinor), trend: '+0.0%', up: true, icon: TrendingUp, color: 'text-brand-600', bg: 'bg-brand-50' },
-            { label: 'Orders', value: overviewLoading ? '...' : (overview?.totalOrders?.toLocaleString() || '0'), trend: '+0.0%', up: true, icon: ShoppingBag, color: 'text-accent', bg: 'bg-accent-subtle' },
-            { label: 'Customers', value: customersStats === undefined ? '...' : (customersStats?.totalCustomers?.toLocaleString() || '0'), trend: '+0.0%', up: true, icon: Users, color: 'text-teal-600', bg: 'bg-teal-50' },
-            { label: 'Delivery Success', value: overviewLoading ? '...' : `${overview?.deliverySuccessRate || 0}%`, trend: '+0.0%', up: true, icon: CheckCircle2, color: 'text-pink-600', bg: 'bg-pink-50' },
-            { label: 'Average Order Value', value: overviewLoading ? '...' : formatCurrency(overview?.aovMinor), trend: '+0.0%', up: true, icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-50' },
+            { label: 'Revenue', value: overviewLoading ? '...' : formatCurrency(overview?.netSalesMinor), trend: `${overview?.revenueGrowth > 0 ? '+' : ''}${overview?.revenueGrowth || 0}%`, up: (overview?.revenueGrowth || 0) >= 0, icon: TrendingUp, color: 'text-brand-600', bg: 'bg-brand-50' },
+            { label: 'Orders', value: overviewLoading ? '...' : (overview?.totalOrders?.toLocaleString() || '0'), trend: `${overview?.orderGrowth > 0 ? '+' : ''}${overview?.orderGrowth || 0}%`, up: (overview?.orderGrowth || 0) >= 0, icon: ShoppingBag, color: 'text-accent', bg: 'bg-accent-subtle' },
+            { label: 'Customers', value: customersStats === undefined ? '...' : (customersStats?.totalCustomers?.toLocaleString() || '0'), trend: `${customersStats?.customerGrowth > 0 ? '+' : ''}${customersStats?.customerGrowth || 0}%`, up: (customersStats?.customerGrowth || 0) >= 0, icon: Users, color: 'text-teal-600', bg: 'bg-teal-50' },
+            { label: 'Delivery Success', value: overviewLoading ? '...' : `${overview?.deliverySuccessRate || 0}%`, trend: `${overview?.deliveryGrowth > 0 ? '+' : ''}${overview?.deliveryGrowth || 0}%`, up: (overview?.deliveryGrowth || 0) >= 0, icon: CheckCircle2, color: 'text-pink-600', bg: 'bg-pink-50' },
+            { label: 'Average Order Value', value: overviewLoading ? '...' : formatCurrency(overview?.aovMinor), trend: `${overview?.aovGrowth > 0 ? '+' : ''}${overview?.aovGrowth || 0}%`, up: (overview?.aovGrowth || 0) >= 0, icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-50' },
           ].map((stat, i) => (
             <Card key={i} className="hover:border-border-subtle hover:shadow-premium-hover transition-all duration-300 rounded-2xl">
               <CardContent className="p-5 flex flex-col h-full justify-between">
@@ -189,11 +189,11 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-3 mt-2">
                       <span className="text-3xl font-extrabold text-content-primary">{overviewLoading ? '...' : formatCurrency(overview?.netSalesMinor)}</span>
                       <div className={`flex items-center text-sm font-bold px-2 py-0.5 rounded-md ${
-                        overview?.revenueGrowth >= 0 
+                        (overview?.revenueGrowth || 0) >= 0 
                           ? 'text-success-text bg-success-subtle' 
                           : 'text-danger-text bg-danger-subtle'
                       }`}>
-                        {overview?.revenueGrowth >= 0 ? <ArrowUpRight className="w-4 h-4 mr-1" /> : <ArrowDownRight className="w-4 h-4 mr-1" />}
+                        {(overview?.revenueGrowth || 0) >= 0 ? <ArrowUpRight className="w-4 h-4 mr-1" /> : <ArrowDownRight className="w-4 h-4 mr-1" />}
                         {overview?.revenueGrowth !== undefined ? `${overview.revenueGrowth > 0 ? '+' : ''}${overview.revenueGrowth}%` : '0%'}
                       </div>
                     </div>
@@ -483,7 +483,9 @@ export default function DashboardPage() {
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
           <div className="relative z-10">
             <h2 className="text-xl md:text-2xl font-extrabold text-white mb-2">Your store is performing great!</h2>
-            <p className="text-brand-100 font-medium text-sm md:text-base">You&apos;re up <span className="font-bold text-white bg-white/20 px-2 py-0.5 rounded-md">18.4%</span> compared to last month. Keep it up!</p>
+            <p className="text-brand-100 font-medium text-sm md:text-base">
+              You&apos;re up <span className="font-bold text-white bg-white/20 px-2 py-0.5 rounded-md">{overview?.revenueGrowth || 0}%</span> compared to last month. Keep it up!
+            </p>
           </div>
           <button className="relative z-10 flex items-center justify-center gap-2 px-6 py-3 bg-white text-brand-600 rounded-xl text-sm font-bold shadow-lg hover:bg-surface-hover transition-all active:scale-95 whitespace-nowrap">
             <Zap className="w-4 h-4 text-brand-600" fill="currentColor" />

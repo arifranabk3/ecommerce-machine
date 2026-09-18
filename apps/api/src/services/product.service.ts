@@ -466,7 +466,7 @@ export class ProductService {
     return variant;
   }
 
-  static async getProducts(tenantId: string, options: { page?: number; limit?: number; search?: string; categoryId?: string; status?: string; includeArchived?: boolean }) {
+  static async getProducts(tenantId: string, options: { page?: number; limit?: number; search?: string; categoryId?: string; status?: string; includeArchived?: boolean; vendorId?: string }) {
     const page = Math.max(1, options.page || 1);
     const limit = Math.min(100, Math.max(1, options.limit || 20));
     const skip = (page - 1) * limit;
@@ -480,6 +480,9 @@ export class ProductService {
     }
     if (options.status) {
       query.status = options.status;
+    }
+    if (options.vendorId) {
+      query.vendorId = options.vendorId;
     }
     if (options.search) {
       const searchRegex = new RegExp(options.search.trim(), 'i');

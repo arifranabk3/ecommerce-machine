@@ -181,8 +181,64 @@ export default function CustomerDetailPage() {
           </div>
         )}
 
+        {/* Tab Content: Notes */}
+        {activeTab === 'notes' && (
+          <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+            <h3 className="text-sm font-bold text-gray-900 mb-4">Customer Notes</h3>
+            <div className="space-y-4 max-w-2xl">
+              {customer.notes && customer.notes.length > 0 ? (
+                <div className="space-y-3">
+                  {customer.notes.map((note: any, idx: number) => (
+                    <div key={idx} className="p-4 bg-gray-50 rounded-lg text-sm text-gray-800 border border-gray-100">
+                      {note.content}
+                      <div className="text-[10px] text-gray-500 mt-2 font-medium">
+                        {new Date(note.createdAt || new Date()).toLocaleString()} {note.authorId ? 'by Staff' : ''}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500 italic py-4">No notes added yet.</div>
+              )}
+              
+              <form 
+                className="pt-4 border-t border-gray-100 mt-6"
+                onSubmit={async (e: any) => {
+                  e.preventDefault();
+                  const content = e.target.note.value;
+                  if (!content.trim()) return;
+                  try {
+                    const res = await fetch(`/api/v1/customers/${customerId}/notes`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ content })
+                    });
+                    if (res.ok) {
+                      e.target.reset();
+                      const { mutate } = require('swr');
+                      mutate(`/api/v1/customers/${customerId}`);
+                    }
+                  } catch (err) {
+                    console.error('Failed to add note', err);
+                  }
+                }}
+              >
+                <textarea 
+                  name="note"
+                  placeholder="Add a new internal note..." 
+                  className="w-full text-sm p-3 bg-gray-50 border border-gray-200 rounded-lg mb-3 focus:ring-2 focus:ring-brand-500 outline-none"
+                  rows={3}
+                />
+                <button type="submit" className="px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 shadow-sm">
+                  Add Note
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* Other tabs placeholder */}
-        {activeTab !== 'overview' && (
+        {activeTab !== 'overview' && activeTab !== 'notes' && (
           <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm text-center py-20 text-gray-500">
             {activeTab} content coming soon.
           </div>

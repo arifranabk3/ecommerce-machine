@@ -6,15 +6,19 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 
-export default function VendorSettlementsPage({ params }: { params: { id: string } }) {
-  const [loading] = useState(false);
+import { useApiQuery } from '@/lib/api-client';
+import { useParams } from 'next/navigation';
 
-  // Mock data for UI structure
-  const mockSettlements = [
-    { id: 'STL-9012', period: 'Oct 01 - Oct 15, 2024', eligible: 12500.00, deductions: 250.00, net: 12250.00, date: '2024-10-18', status: 'PAID' },
-    { id: 'STL-9013', period: 'Oct 16 - Oct 31, 2024', eligible: 18400.00, deductions: 0.00, net: 18400.00, date: '2024-11-03', status: 'PENDING' },
-    { id: 'STL-9014', period: 'Nov 01 - Nov 15, 2024', eligible: 9200.00, deductions: 100.00, net: 9100.00, date: '2024-11-18', status: 'PROCESSING' },
-  ];
+export default function VendorSettlementsPage() {
+  const params = useParams();
+  const { data: settlementsData, isLoading } = useApiQuery<any>(`/api/v1/settlements?vendorId=${params.id}`);
+  
+  const settlements = settlementsData?.items || settlementsData?.data?.items || settlementsData?.data || settlementsData || [];
+
+  const formatCurrency = (minor: number | undefined) => {
+    if (minor === undefined) return 'PKR 0';
+    return `PKR ${(minor / 100).toLocaleString()}`;
+  };
 
   return (
     <DashboardLayout>
@@ -57,7 +61,7 @@ export default function VendorSettlementsPage({ params }: { params: { id: string
               Products
             </Link>
             <Link href={`/vendors/${params.id}/settlements`} className="whitespace-nowrap pb-4 px-1 border-b-2 border-[#A9C2B9] font-medium text-sm text-[#A9C2B9]">
-              Settlements ({mockSettlements.length})
+              Settlements ({settlements.length})
             </Link>
           </nav>
         </div>
@@ -83,7 +87,7 @@ export default function VendorSettlementsPage({ params }: { params: { id: string
 
         {/* Settlements Table */}
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          {loading ? (
+          {isLoading ? (
              <div className="p-8 text-center text-gray-500">Loading settlements...</div>
           ) : (
             <table className="w-full text-left text-sm text-gray-600">
@@ -99,20 +103,20 @@ export default function VendorSettlementsPage({ params }: { params: { id: string
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {mockSettlements.length === 0 ? (
+                {settlements.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                       No settlements found for this vendor.
                     </td>
                   </tr>
                 ) : (
-                  mockSettlements.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50/50 transition">
-                      <td className="px-6 py-4 font-mono text-xs text-gray-500">{item.id}</td>
-                      <td className="px-6 py-4">{item.period}</td>
-                      <td className="px-6 py-4">${item.eligible.toFixed(2)}</td>
-                      <td className="px-6 py-4 text-red-500">-${item.deductions.toFixed(2)}</td>
-                      <td className="px-6 py-4 font-bold text-gray-900">${item.net.toFixed(2)}</td>
+                  settlements.map((item: any) => (
+                    <tr key={item._id} className="hover:bg-gray-50/50 transition">
+                      <td className="px-6 py-4 font-mono text-xs text-gray-500">{item._id.substring(0,8).toUpperCase()}</td>
+                      <td className="px-6 py-4">{new Date(item.periodStart).toLocaleDateString()} - {new Date(item.periodEnd).toLocaleDateString()}</td>
+                      <td className="px-6 py-4">{formatCurrency(item.totalSalesMinor)}</td>
+                      <td className="px-6 py-4 text-red-500">-{formatCurrency(item.totalDeductionsMinor)}</td>
+                      <td className="px-6 py-4 font-bold text-gray-900">{formatCurrency(item.netPayableMinor)}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${
                           item.status === 'PAID' ? 'bg-emerald-50 text-emerald-700' : 
@@ -136,9 +140,9 @@ export default function VendorSettlementsPage({ params }: { params: { id: string
         </div>
         
         {/* Pagination Placeholder */}
-        {!loading && mockSettlements.length > 0 && (
+        {!isLoading && settlements.length > 0 && (
           <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
-            <div>Showing 1 to {mockSettlements.length} of {mockSettlements.length} entries</div>
+            <div>Showing 1 to {settlements.length} of {settlements.length} entries</div>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" disabled>Previous</Button>
               <Button variant="outline" size="sm" disabled>Next</Button>

@@ -22,23 +22,23 @@ import {
   MoreHorizontal,
   CheckCircle2
 } from 'lucide-react';
+import { useApiQuery } from '@/lib/api-client';
 
 export default function SuperAdminDashboard() {
   const [activeTab, setActiveTab] = useState<'tenants' | 'health'>('tenants');
-
-  const mockTenants = [
-    { id: 'tn_acme', name: 'Acme Store', plan: 'Professional', status: 'ACTIVE', users: 12, ordersThisMonth: 1420 },
-    { id: 'tn_globex', name: 'Globex Corp', plan: 'Enterprise', status: 'ACTIVE', users: 45, ordersThisMonth: 8900 },
-    { id: 'tn_stark', name: 'Stark Retail', plan: 'Starter', status: 'SUSPENDED', users: 3, ordersThisMonth: 120 },
-    { id: 'tn_wayne', name: 'Wayne Tech', plan: 'Growth', status: 'ACTIVE', users: 8, ordersThisMonth: 430 },
-  ];
-
-  const mockHealth = {
-    status: 'HEALTHY',
-    database: { status: 'HEALTHY', latencyMs: 3, load: '24%' },
-    redis: { status: 'HEALTHY', statusText: 'ready', hitRate: '98.2%' },
-    api: { status: 'HEALTHY', uptime: '14d 6h', reqPerSec: 1240 }
+  
+  const { data: tenantsData, isLoading: loadingTenants } = useApiQuery<any>('/api/v1/platform/tenants');
+  const { data: healthData, isLoading: loadingHealth } = useApiQuery<any>('/api/v1/platform/health');
+  
+  const tenants = tenantsData?.tenants || tenantsData?.data || [];
+  const health = healthData?.health || healthData?.data || {
+    status: 'UNKNOWN',
+    database: { status: 'UNKNOWN', latencyMs: 0, load: 'N/A' },
+    redis: { status: 'UNKNOWN', statusText: 'N/A', hitRate: 'N/A' },
+    api: { status: 'UNKNOWN', uptime: 'N/A', reqPerSec: 0 }
   };
+
+
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
@@ -113,7 +113,7 @@ export default function SuperAdminDashboard() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-500 mb-0.5">Total Tenants</p>
-                    <div className="text-2xl font-extrabold text-slate-900">4,284</div>
+                    <div className="text-2xl font-extrabold text-slate-900">{tenants.length}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -124,7 +124,7 @@ export default function SuperAdminDashboard() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-slate-500 mb-0.5">Active Stores</p>
-                    <div className="text-2xl font-extrabold text-slate-900">5,102</div>
+                    <div className="text-2xl font-extrabold text-slate-900">{tenants.filter((t: any) => t.status === 'ACTIVE').length}</div>
                   </div>
                 </CardContent>
               </Card>
@@ -166,17 +166,25 @@ export default function SuperAdminDashboard() {
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {mockTenants.map((t) => (
-                    <Tr key={t.id}>
-                      <Td className="pl-6 font-bold text-slate-900">{t.name}</Td>
+                  {loadingTenants ? (
+                    <Tr>
+                      <Td colSpan={7} className="text-center py-8 text-slate-500">Loading tenants...</Td>
+                    </Tr>
+                  ) : tenants.length === 0 ? (
+                    <Tr>
+                      <Td colSpan={7} className="text-center py-8 text-slate-500">No tenants found.</Td>
+                    </Tr>
+                  ) : tenants.map((t: any) => (
+                    <Tr key={t.tenantId}>
+                      <Td className="pl-6 font-bold text-slate-900">{t.businessName}</Td>
                       <Td>
                         <code className="px-2 py-1 bg-slate-100 rounded text-xs font-mono font-semibold text-slate-600">
-                          {t.id}
+                          {t.tenantId}
                         </code>
                       </Td>
                       <Td>
-                        <Badge variant={t.plan === 'Enterprise' ? 'warning' : 'info'} className="text-[10px]">
-                          {t.plan}
+                        <Badge variant={t.planId === 'ENTERPRISE' ? 'warning' : 'info'} className="text-[10px]">
+                          {t.planId || 'STARTER'}
                         </Badge>
                       </Td>
                       <Td>
@@ -184,8 +192,8 @@ export default function SuperAdminDashboard() {
                           {t.status}
                         </Badge>
                       </Td>
-                      <Td className="text-right font-semibold text-slate-600">{t.users}</Td>
-                      <Td className="text-right font-semibold text-slate-600">{t.ordersThisMonth.toLocaleString()}</Td>
+                      <Td className="text-right font-semibold text-slate-600">{t.userCount || 0}</Td>
+                      <Td className="text-right font-semibold text-slate-600">-</Td>
                       <Td className="text-right pr-6">
                         <Button variant="outline" size="sm" className="bg-white">Manage</Button>
                       </Td>
@@ -228,11 +236,11 @@ export default function SuperAdminDashboard() {
                     </div>
                     <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                       <span className="text-sm text-slate-500 font-medium">Latency</span>
-                      <span className="text-sm font-bold text-slate-900">{mockHealth.database.latencyMs}ms</span>
+                      <span className="text-sm font-bold text-slate-900">{health.database?.latencyMs || 0}ms</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-slate-500 font-medium">CPU Load</span>
-                      <span className="text-sm font-bold text-slate-900">{mockHealth.database.load}</span>
+                      <span className="text-sm font-bold text-slate-900">{health.database?.load || 'N/A'}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -256,11 +264,11 @@ export default function SuperAdminDashboard() {
                     </div>
                     <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                       <span className="text-sm text-slate-500 font-medium">Connection</span>
-                      <span className="text-sm font-bold text-slate-900">{mockHealth.redis.statusText}</span>
+                      <span className="text-sm font-bold text-slate-900">{health.redis?.statusText || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-slate-500 font-medium">Cache Hit Rate</span>
-                      <span className="text-sm font-bold text-emerald-600">{mockHealth.redis.hitRate}</span>
+                      <span className="text-sm font-bold text-emerald-600">{health.redis?.hitRate || 'N/A'}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -284,11 +292,11 @@ export default function SuperAdminDashboard() {
                     </div>
                     <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                       <span className="text-sm text-slate-500 font-medium">Uptime</span>
-                      <span className="text-sm font-bold text-slate-900">{mockHealth.api.uptime}</span>
+                      <span className="text-sm font-bold text-slate-900">{health.api?.uptime || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-slate-500 font-medium">Traffic</span>
-                      <span className="text-sm font-bold text-slate-900">{mockHealth.api.reqPerSec} req/s</span>
+                      <span className="text-sm font-bold text-slate-900">{health.api?.reqPerSec || 0} req/s</span>
                     </div>
                   </div>
                 </CardContent>

@@ -107,4 +107,41 @@ export class TenantController {
       next(error);
     }
   }
+
+  static async provisionTenant(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    try {
+      if (!req.user) return res.status(401).json({ success: false });
+      
+      const { businessName, storeName, storeSlug, country, currency, themeId } = req.body;
+      
+      // Update tenant
+      const updatedTenant = await AuthService.updateTenantSettings(req.user.tenantId, {
+        businessName,
+        country,
+        currency
+      });
+
+      // Create Store using StoreService
+      const { StoreService } = require('../services/store.service');
+      const store = await StoreService.createStore({
+        tenantId: req.user.tenantId,
+        name: storeName,
+        slug: storeSlug,
+        country,
+        currency,
+        themeId
+      });
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          tenant: updatedTenant,
+          store
+        }
+      };
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  }
 }

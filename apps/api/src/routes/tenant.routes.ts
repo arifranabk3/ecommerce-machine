@@ -18,3 +18,6 @@ tenantRouter.post('/invitations', authenticateToken, requirePermission('users.in
 // Subscription & Usage Foundations
 tenantRouter.get('/subscription', authenticateToken, TenantController.getSubscription);
 tenantRouter.get('/usage', authenticateToken, TenantController.getUsage);
+
+// Provisioning
+tenantRouter.post('/tenant/provision', authenticateToken, TenantController.provisionTenant);

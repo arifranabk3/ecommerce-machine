@@ -349,6 +349,57 @@ export default function OrderDetailPage() {
                 </CardContent>
               </Card>
             )}
+
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-sm font-bold text-content-primary uppercase tracking-widest mb-6 border-b border-border pb-4">Notes</h3>
+                <div className="space-y-4">
+                  {order.notes && order.notes.length > 0 ? (
+                    <div className="space-y-3">
+                      {order.notes.map((note: any, i: number) => (
+                        <div key={i} className="p-3 bg-surface-secondary rounded-lg text-sm text-content-primary border border-border">
+                          {note.content}
+                          <div className="text-[10px] text-content-muted mt-2 font-medium">
+                            {new Date(note.createdAt || new Date()).toLocaleString()} {note.authorId ? 'by Staff' : ''}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-xs text-content-muted text-center italic py-2">No notes added yet.</div>
+                  )}
+                  <form 
+                    className="pt-2 border-t border-border mt-4" 
+                    onSubmit={async (e: any) => {
+                      e.preventDefault();
+                      const content = e.target.note.value;
+                      if (!content.trim()) return;
+                      try {
+                        const res = await fetch(`/api/v1/orders/${orderId}/notes`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ content })
+                        });
+                        if (res.ok) {
+                          e.target.reset();
+                          mutate();
+                        }
+                      } catch (err) {
+                        console.error('Failed to add note', err);
+                      }
+                    }}
+                  >
+                    <textarea 
+                      name="note"
+                      placeholder="Add an internal note..." 
+                      className="w-full text-sm p-3 bg-surface border border-border rounded-lg mb-2 focus:ring-2 focus:ring-brand-500 outline-none"
+                      rows={2}
+                    />
+                    <Button type="submit" variant="outline" size="sm" className="w-full bg-surface">Add Note</Button>
+                  </form>
+                </div>
+              </CardContent>
+            </Card>
             
           </div>
           

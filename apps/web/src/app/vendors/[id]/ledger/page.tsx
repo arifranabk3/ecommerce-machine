@@ -18,21 +18,26 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-export default function VendorLedgerPage() {
-  const kpis = [
-    { title: 'Total Payables', value: 'PKR 125,000', subtitle: 'Currently pending', icon: DollarSign, bg: 'bg-brand-100', color: 'text-brand-600', trend: '+12.5%', isUp: true },
-    { title: 'Total Paid (YTD)', value: 'PKR 1,450,000', subtitle: 'In 2026', icon: Wallet, bg: 'bg-emerald-100', color: 'text-emerald-600', trend: '+24.2%', isUp: true },
-    { title: 'Deductions (RTO)', value: 'PKR 12,450', subtitle: 'From 25 returns', icon: TrendingDown, bg: 'bg-red-100', color: 'text-red-600', trend: '-2.1%', isUp: false },
-    { title: 'Next Payout', value: 'PKR 45,000', subtitle: 'Expected Sep 15', icon: FileText, bg: 'bg-blue-100', color: 'text-blue-600', trend: '', isUp: true },
-  ];
+import { useApiQuery } from '@/lib/api-client';
+import { useParams } from 'next/navigation';
 
-  const ledgerEntries = [
-    { id: 'LDG-9021', date: 'Sep 05, 2026', description: 'Order Fulfillment (42 items)', reference: 'ORD-BATCH-882', type: 'Credit', amount: 'PKR 45,000', balance: 'PKR 125,000', status: 'Pending' },
-    { id: 'LDG-9020', date: 'Sep 04, 2026', description: 'RTO Deduction (3 items)', reference: 'RTO-4421', type: 'Debit', amount: 'PKR 3,450', balance: 'PKR 80,000', status: 'Completed' },
-    { id: 'LDG-9019', date: 'Sep 02, 2026', description: 'Weekly Payout', reference: 'PAY-7762', type: 'Debit', amount: 'PKR 55,000', balance: 'PKR 83,450', status: 'Completed' },
-    { id: 'LDG-9018', date: 'Aug 28, 2026', description: 'Order Fulfillment (65 items)', reference: 'ORD-BATCH-881', type: 'Credit', amount: 'PKR 85,000', balance: 'PKR 138,450', status: 'Completed' },
-    { id: 'LDG-9017', date: 'Aug 26, 2026', description: 'Platform Fee Deduction', reference: 'FEE-102', type: 'Debit', amount: 'PKR 1,500', balance: 'PKR 53,450', status: 'Completed' },
-    { id: 'LDG-9016', date: 'Aug 20, 2026', description: 'Order Fulfillment (12 items)', reference: 'ORD-BATCH-880', type: 'Credit', amount: 'PKR 15,000', balance: 'PKR 54,950', status: 'Completed' },
+export default function VendorLedgerPage() {
+  const params = useParams();
+  const { data: ledgerData, isLoading } = useApiQuery<any>(`/api/v1/vendors/${params.id}/ledger`);
+  
+  const ledgerEntries = ledgerData?.items || [];
+  const balance = ledgerData?.balance || { totalPayableMinor: 0, totalPaidMinor: 0 };
+  const pagination = ledgerData?.pagination || { total: 0, page: 1, limit: 50 };
+
+  const formatCurrency = (minor: number | undefined) => {
+    if (minor === undefined) return 'PKR 0';
+    return `PKR ${(minor / 100).toLocaleString()}`;
+  };
+
+  const kpis = [
+    { title: 'Total Payables', value: formatCurrency(balance.totalPayableMinor), subtitle: 'Outstanding', icon: DollarSign, bg: 'bg-brand-100', color: 'text-brand-600', trend: '', isUp: true },
+    { title: 'Total Paid (YTD)', value: formatCurrency(balance.totalPaidMinor), subtitle: 'Processed', icon: Wallet, bg: 'bg-emerald-100', color: 'text-emerald-600', trend: '', isUp: true },
+    { title: 'Deductions', value: formatCurrency(balance.totalAdjustmentsMinor), subtitle: 'Credits/Debits', icon: TrendingDown, bg: 'bg-red-100', color: 'text-red-600', trend: '', isUp: false },
   ];
 
   return (
@@ -68,10 +73,10 @@ export default function VendorLedgerPage() {
 
         {/* Tab Navigation */}
         <div className="border-b border-slate-200 flex gap-8">
-          <Link href="/vendors/1" className="pb-3 border-b-2 border-transparent text-slate-500 font-bold text-sm hover:text-slate-700">Overview</Link>
-          <Link href="/vendors/1/products" className="pb-3 border-b-2 border-transparent text-slate-500 font-bold text-sm hover:text-slate-700">Products</Link>
-          <Link href="/vendors/1/ledger" className="pb-3 border-b-2 border-brand-600 text-brand-700 font-bold text-sm">Ledger & Payouts</Link>
-          <Link href="/vendors/1/documents" className="pb-3 border-b-2 border-transparent text-slate-500 font-bold text-sm hover:text-slate-700">Documents</Link>
+          <Link href={`/vendors/${params.id}`} className="pb-3 border-b-2 border-transparent text-slate-500 font-bold text-sm hover:text-slate-700">Overview</Link>
+          <Link href={`/vendors/${params.id}/products`} className="pb-3 border-b-2 border-transparent text-slate-500 font-bold text-sm hover:text-slate-700">Products</Link>
+          <Link href={`/vendors/${params.id}/ledger`} className="pb-3 border-b-2 border-brand-600 text-brand-700 font-bold text-sm">Ledger & Payouts</Link>
+          <Link href={`/vendors/${params.id}/documents`} className="pb-3 border-b-2 border-transparent text-slate-500 font-bold text-sm hover:text-slate-700">Documents</Link>
         </div>
 
         {/* KPI Grid */}
@@ -165,38 +170,48 @@ export default function VendorLedgerPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {ledgerEntries.map((entry, i) => (
-                  <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-brand-600 cursor-pointer hover:underline">{entry.id}</div>
-                      <div className="text-[11px] font-semibold text-slate-400">{entry.date}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-slate-900">{entry.description}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">{entry.reference}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${entry.type === 'Credit' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
-                        {entry.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className={`font-extrabold ${entry.type === 'Credit' ? 'text-emerald-600' : 'text-red-600'}`}>
-                        {entry.type === 'Credit' ? '+' : '-'}{entry.amount}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="font-bold text-slate-900">{entry.balance}</div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${entry.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
-                        {entry.status}
-                      </span>
-                    </td>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-8 text-center text-slate-500 font-medium">Loading ledger entries...</td>
                   </tr>
-                ))}
+                ) : ledgerEntries.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-8 text-center text-slate-500 font-medium">No ledger entries found.</td>
+                  </tr>
+                ) : (
+                  ledgerEntries.map((entry: any) => (
+                    <tr key={entry._id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-brand-600 cursor-pointer hover:underline">{entry._id.substring(0,8).toUpperCase()}</div>
+                        <div className="text-[11px] font-semibold text-slate-400">{new Date(entry.createdAt).toLocaleDateString()}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-slate-900">{entry.description || entry.type}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="font-mono text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded">{entry.referenceId || 'N/A'}</span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${entry.type === 'PURCHASE' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
+                          {entry.type}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className={`font-extrabold ${entry.type === 'PURCHASE' ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {entry.type === 'PURCHASE' ? '+' : '-'}{formatCurrency(entry.amountMinor)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="font-bold text-slate-900">{formatCurrency(entry.balanceAfterMinor)}</div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${entry.status === 'CLEARED' ? 'bg-emerald-100 text-emerald-700' : 'bg-orange-100 text-orange-700'}`}>
+                          {entry.status || 'PENDING'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -204,7 +219,7 @@ export default function VendorLedgerPage() {
           {/* Pagination */}
           <div className="px-6 py-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-sm font-semibold text-slate-500">
-              Showing 1 to 6 of 124 entries
+              Showing {ledgerEntries.length} of {pagination.total} entries
             </div>
             <div className="flex items-center gap-4">
               <nav className="flex items-center gap-1">

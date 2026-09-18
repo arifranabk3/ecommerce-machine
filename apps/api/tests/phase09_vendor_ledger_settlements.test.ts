@@ -123,7 +123,7 @@ describe('SELLZY — PHASE 09: VENDOR LEDGER & SETTLEMENTS SECURITY & INTEGRITY 
       jest.spyOn(VendorLedgerEntryModel, 'countDocuments').mockResolvedValue(0 as any);
       const res = await request(app).get(`/api/v1/vendors/${vendorBId}/ledger`).set('Authorization', `Bearer ${tokenA}`);
       expect(res.status).toBe(200);
-      expect(res.body.data).toHaveLength(0);
+      expect(res.body.data.items).toHaveLength(0);
     });
 
     it('2. Tenant A cannot read Tenant B balance', async () => {
@@ -833,7 +833,7 @@ describe('SELLZY — PHASE 09: VENDOR LEDGER & SETTLEMENTS SECURITY & INTEGRITY 
 
       const res = await request(app).get(`/api/v1/vendors/${vendorAId}/ledger?page=2&limit=20`).set('Authorization', `Bearer ${tokenA}`);
       expect(res.status).toBe(200);
-      expect(res.body.pagination.page).toBe(2);
+      expect(res.body.data.pagination.page).toBe(2);
     });
 
     it('69. Controller adjustLedger validates missing body fields', async () => {
