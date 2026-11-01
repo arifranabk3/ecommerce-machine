@@ -1,3 +1,4 @@
+import { MarketingHeaderNav } from '@/components/marketing/MarketingHeaderNav';
 'use client';
 
 import React, { useState } from 'react';
@@ -63,6 +64,7 @@ export default function CampaignsDashboardPage() {
   return (
     <DashboardLayout>
       <div className="max-w-[1600px] mx-auto space-y-6 pb-12 animate-fade-in">
+        <MarketingHeaderNav />
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>

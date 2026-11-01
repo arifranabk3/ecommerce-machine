@@ -2154,3 +2154,187 @@ export interface IPlatformSettings {
 
 
 
+
+// ==========================================
+// USA Lead Collection, Verification & Lists
+// ==========================================
+
+export enum LeadVerificationStatus {
+  UNVERIFIED = 'unverified',
+  SYNTAX_VALID = 'syntax_valid',
+  DOMAIN_VALID = 'domain_valid',
+  VERIFICATION_PENDING = 'verification_pending',
+  DELIVERABLE = 'deliverable',
+  UNDELIVERABLE = 'undeliverable',
+  RISKY_OR_UNKNOWN = 'risky_or_unknown',
+  SUPPRESSED = 'suppressed'
+}
+
+export enum LeadSourceType {
+  DIRECTORY_SEARCH = 'DIRECTORY_SEARCH',
+  PUBLIC_REGISTRY = 'PUBLIC_REGISTRY',
+  CSV_IMPORT = 'CSV_IMPORT',
+  MANUAL = 'MANUAL',
+  DOMAIN_GRABBER = 'DOMAIN_GRABBER'
+}
+
+export interface ILead {
+  id?: string;
+  tenantId: string;
+  storeId?: string;
+  companyName: string;
+  website?: string;
+  email: string;
+  normalizedEmail: string;
+  phone?: string;
+  city?: string;
+  state?: string;
+  country: string;
+  industry?: string;
+  source: LeadSourceType;
+  sourceUrl?: string;
+  collectedAt: Date;
+  verificationStatus: LeadVerificationStatus;
+  verificationDetails?: {
+    verifiedAt?: Date;
+    provider?: string;
+    mxFound?: boolean;
+    isDisposable?: boolean;
+    isRoleAccount?: boolean;
+    rawResponse?: string;
+  };
+  listIds?: string[];
+  tags?: string[];
+  notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ILeadList {
+  id?: string;
+  tenantId: string;
+  storeId?: string;
+  name: string;
+  description?: string;
+  leadCount: number;
+  tags?: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IEmailSuppression {
+  id?: string;
+  tenantId: string;
+  email: string;
+  normalizedEmail: string;
+  reason: 'UNSUBSCRIBE' | 'BOUNCE' | 'COMPLAINT' | 'MANUAL';
+  source?: string;
+  suppressedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ==========================================
+// Excel Email Import & Lead Matching Engine
+// ==========================================
+
+export enum MatchResultStatus {
+  EXACT_MATCH = 'exact_match',
+  GRABBED_ONLY = 'grabbed_only',
+  EXCEL_ONLY = 'excel_only',
+  DUPLICATE_IN_FILE = 'duplicate_in_file',
+  INVALID_EMAIL = 'invalid_email',
+  VERIFICATION_PENDING = 'verification_pending',
+  UNDELIVERABLE = 'undeliverable',
+  SUPPRESSED = 'suppressed'
+}
+
+export interface IImportColumnMapping {
+  email: string;
+  companyName?: string;
+  website?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  city?: string;
+  state?: string;
+  industry?: string;
+  source?: string;
+}
+
+export interface IMatchRecord {
+  rowNumber: number;
+  originalEmail: string;
+  normalizedEmail: string;
+  companyName?: string;
+  website?: string;
+  status: MatchResultStatus;
+  reason: string;
+  matchedLeadId?: string;
+  secondaryIndicators?: {
+    sameDomain?: boolean;
+    sameCompany?: boolean;
+  };
+}
+
+export interface IImportJob {
+  id?: string;
+  tenantId: string;
+  storeId?: string;
+  fileName: string;
+  fileSize: number;
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  duplicateRows: number;
+  exactMatchRows: number;
+  excelOnlyRows: number;
+  grabbedOnlyRows: number;
+  suppressedRows: number;
+  mapping: IImportColumnMapping;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ==========================================
+// Canonical Email & Lead Schema
+// ==========================================
+
+export const CANONICAL_LEAD_HEADERS = [
+  'Email',
+  'First Name',
+  'Last Name',
+  'Company',
+  'Website',
+  'Industry',
+  'Country',
+  'State',
+  'City',
+  'Source URL',
+  'Verification Status'
+] as const;
+
+export type CanonicalLeadHeader = typeof CANONICAL_LEAD_HEADERS[number];
+
+export interface ICanonicalLeadRow {
+  'Email': string;
+  'First Name'?: string;
+  'Last Name'?: string;
+  'Company'?: string;
+  'Website'?: string;
+  'Industry'?: string;
+  'Country'?: string;
+  'State'?: string;
+  'City'?: string;
+  'Source URL'?: string;
+  'Verification Status'?: string;
+}
+
+export interface ISchemaValidationResult {
+  isValid: boolean;
+  missingHeaders: string[];
+  extraHeaders: string[];
+  orderMismatch: boolean;
+  actualHeaders: string[];
+  expectedHeaders: readonly string[];
+}

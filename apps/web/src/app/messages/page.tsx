@@ -1,3 +1,4 @@
+import { MarketingHeaderNav } from '@/components/marketing/MarketingHeaderNav';
 'use client';
 
 import React, { useState } from 'react';
@@ -45,6 +46,7 @@ export default function UnifiedInboxPage() {
   return (
     <DashboardLayout>
       <div className="max-w-7xl mx-auto space-y-6">
+        <MarketingHeaderNav />
         <PageHeader 
           title="Unified Customer Communication Inbox" 
           subtitle="Omnichannel messages across WhatsApp, Email, and SMS with realtime status tracking."

@@ -34,7 +34,7 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
   ];
 
   const growthNav = [
-    { name: 'Marketing', href: '/campaigns', icon: LineChart },
+    { name: 'Marketing', href: '/marketing', icon: LineChart },
     { name: 'Automation', href: '/automation', icon: Settings },
     { name: 'Analytics', href: '/analytics', icon: LineChart },
   ];
@@ -133,3 +133,4 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({ 
     </>
   );
 };
+

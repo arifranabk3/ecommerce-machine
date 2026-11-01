@@ -27,6 +27,7 @@ import vendorLedgerRouter from './routes/vendor-ledger.routes';
 import paymentRouter, { refundRouter, financeRouter } from './routes/payment.routes';
 import shippingRouter, { returnsRouter, courierSettingsRouter } from './routes/shipping.routes';
 import communicationRouter from './routes/communication.routes';
+import leadRouter from './routes/lead.routes';
 import automationRouter from './routes/automation.routes';
 import approvalRouter from './routes/approval.routes';
 import exceptionRouter from './routes/exception.routes';
@@ -93,6 +94,7 @@ export function createApp(): Application {
   app.use('/api/v1/returns', returnsRouter);
   app.use('/api/v1/settings/couriers', courierSettingsRouter);
   app.use('/api/v1/communication', communicationRouter);
+  app.use('/api/v1/leads', leadRouter);
   app.use('/api/v1/automation', automationRouter);
   app.use('/api/v1/approvals', approvalRouter);
   app.use('/api/v1/exceptions', exceptionRouter);

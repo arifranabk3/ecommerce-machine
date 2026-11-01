@@ -1,3 +1,4 @@
+import { MarketingHeaderNav } from '@/components/marketing/MarketingHeaderNav';
 'use client';
 
 import React, { useState } from 'react';
@@ -31,6 +32,7 @@ export default function MessageTemplatesPage() {
   return (
     <DashboardLayout>
       <div className="max-w-7xl mx-auto space-y-6">
+        <MarketingHeaderNav />
         <PageHeader 
           title="Message & Notification Templates" 
           subtitle="Pre-approved message templates for WhatsApp Cloud API, Email, and SMS notifications."
