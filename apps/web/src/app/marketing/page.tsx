@@ -1,6 +1,6 @@
-import { MarketingHeaderNav } from '@/components/marketing/MarketingHeaderNav';
 'use client';
 
+import { MarketingHeaderNav } from '@/components/marketing/MarketingHeaderNav';
 import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/Card';
