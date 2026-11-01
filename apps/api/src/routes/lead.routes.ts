@@ -10,8 +10,16 @@ router.use(authenticateToken);
 router.get('/overview', requirePermission('customers.view'), LeadController.getLeadOverview);
 router.post('/collect', requirePermission('customers.view'), LeadController.collectLeads);
 router.get('/', requirePermission('customers.view'), LeadController.getLeads);
-router.get('/export-csv', requirePermission('customers.view'), LeadController.exportLeadsCsv);
+router.get('/export-csv', requirePermission('customers.view'), LeadController.exportCountryLeadsCsv);
 router.post('/import-csv', requirePermission('customers.create'), LeadController.importLeadsCsv);
+
+// Country-Based Collection Engine & Provider Endpoints
+router.get('/countries', requirePermission('customers.view'), LeadController.getSupportedCountries);
+router.post('/jobs/start', requirePermission('customers.create'), LeadController.startCountryCollectionJob);
+router.get('/jobs/recent', requirePermission('customers.view'), LeadController.getRecentCollectionJobs);
+router.get('/jobs/:jobId', requirePermission('customers.view'), LeadController.getCollectionJobStatus);
+router.post('/jobs/:jobId/cancel', requirePermission('customers.create'), LeadController.cancelCollectionJob);
+router.post('/jobs/:jobId/retry', requirePermission('customers.create'), LeadController.retryCollectionJob);
 
 // Domain Email Grabber
 router.post('/grab', requirePermission('customers.create'), LeadController.grabEmails);

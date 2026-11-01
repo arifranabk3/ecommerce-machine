@@ -2338,3 +2338,58 @@ export interface ISchemaValidationResult {
   actualHeaders: string[];
   expectedHeaders: readonly string[];
 }
+
+
+// ==========================================
+// Country-Based Lead Collection & Job Types
+// ==========================================
+
+export enum CollectionJobStatus {
+  QUEUED = 'QUEUED',
+  RUNNING = 'RUNNING',
+  COMPLETED = 'COMPLETED',
+  COMPLETED_WITH_WARNINGS = 'COMPLETED_WITH_WARNINGS',
+  FAILED = 'FAILED',
+  CANCELLED = 'CANCELLED'
+}
+
+export interface ISupportedCountry {
+  code: string;
+  name: string;
+  flag: string;
+  isSupported: boolean;
+  providerName?: string;
+  availableFilters: string[];
+}
+
+export interface ICollectionJobFilters {
+  country: string;
+  industry?: string;
+  state?: string;
+  city?: string;
+  businessType?: string;
+  businessName?: string;
+  website?: string;
+  maxRecords?: number;
+  targetListId?: string;
+}
+
+export interface ICollectionJob {
+  id?: string;
+  tenantId: string;
+  storeId?: string;
+  country: string;
+  status: CollectionJobStatus;
+  filters: ICollectionJobFilters;
+  totalDiscovered: number;
+  emailsCollected: number;
+  duplicatesSkipped: number;
+  invalidRecords: number;
+  recordsSaved: number;
+  progressPercentage: number;
+  startedAt?: Date;
+  completedAt?: Date;
+  errorDetails?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}

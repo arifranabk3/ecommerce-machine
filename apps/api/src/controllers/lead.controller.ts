@@ -1,3 +1,4 @@
+import { CountryLeadService } from '../services/CountryLeadService';
 import { AuditLogModel } from '../models/AuditLog';
 import { Request, Response, NextFunction } from 'express';
 import { LeadService } from '../services/LeadService';
@@ -602,6 +603,148 @@ export class LeadController {
 
       const result = await LeadService.manageListMembers(tenantId, id, leadIds, action);
       res.status(200).json({ success: true, data: result });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+
+  /**
+   * Get list of supported countries and available data provider capabilities
+   */
+  public static async getSupportedCountries(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const countries = CountryLeadService.getSupportedCountries();
+      res.status(200).json({ success: true, data: countries });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Start a Country-Based Lead Collection Job
+   */
+  public static async startCountryCollectionJob(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const tenantId = (req as any).tenantId;
+      const userId = (req as any).userId || (req as any).user?.id || 'system';
+      const storeId = (req as any).storeId || (req.headers['x-store-id'] as string);
+      const { country, industry, state, city, businessType, businessName, website, maxRecords, targetListId } = req.body;
+
+      if (!country) {
+        res.status(400).json({ error: 'country is required (ISO 2-letter code, e.g. US, GB, CA, AU, DE)' });
+        return;
+      }
+
+      const job = await CountryLeadService.startCollectionJob(
+        tenantId,
+        { country, industry, state, city, businessType, businessName, website, maxRecords, targetListId },
+        storeId,
+        userId
+      );
+
+      res.status(202).json({
+        success: true,
+        message: job.status === 'FAILED' ? job.errorDetails : 'Collection job started successfully. Zero emails sent.',
+        data: job
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Get Collection Job Status & Telemetry
+   */
+  public static async getCollectionJobStatus(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const tenantId = (req as any).tenantId;
+      const { jobId } = req.params;
+
+      const job = await CountryLeadService.getJobStatus(tenantId, jobId);
+      if (!job) {
+        res.status(404).json({ error: 'Collection job not found' });
+        return;
+      }
+
+      res.status(200).json({ success: true, data: job });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Cancel an ongoing Collection Job
+   */
+  public static async cancelCollectionJob(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const tenantId = (req as any).tenantId;
+      const { jobId } = req.params;
+
+      const job = await CountryLeadService.cancelJob(tenantId, jobId);
+      if (!job) {
+        res.status(404).json({ error: 'Collection job not found' });
+        return;
+      }
+
+      res.status(200).json({ success: true, message: 'Collection job cancelled.', data: job });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Retry an eligible failed/cancelled Collection Job
+   */
+  public static async retryCollectionJob(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const tenantId = (req as any).tenantId;
+      const userId = (req as any).userId || (req as any).user?.id || 'system';
+      const { jobId } = req.params;
+
+      const job = await CountryLeadService.retryJob(tenantId, jobId, userId);
+      if (!job) {
+        res.status(404).json({ error: 'Collection job not found' });
+        return;
+      }
+
+      res.status(200).json({ success: true, message: 'Collection job restarted.', data: job });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * List Recent Collection Jobs
+   */
+  public static async getRecentCollectionJobs(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const tenantId = (req as any).tenantId;
+      const jobs = await CountryLeadService.getRecentJobs(tenantId);
+      res.status(200).json({ success: true, data: jobs });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * Export Canonical CSV with Formula Injection Defense & Proper Filename
+   */
+  public static async exportCountryLeadsCsv(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const tenantId = (req as any).tenantId;
+      const { listId, country, leadIds } = req.query;
+
+      const parsedLeadIds = typeof leadIds === 'string' ? leadIds.split(',').filter(Boolean) : undefined;
+      const { csvContent, filename } = await CountryLeadService.exportCanonicalCsv(tenantId, {
+        listId: listId as string,
+        country: country as string,
+        leadIds: parsedLeadIds
+      });
+
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.status(200).send(csvContent);
     } catch (err) {
       next(err);
     }
