@@ -28,3 +28,4 @@ Exported files follow the standardized naming format:
 `Sellzy-[COUNTRY]-Emails-[YYYY-MM-DD].csv`
 
 Example: `Sellzy-GB-Emails-2026-11-01.csv`
+

@@ -15,3 +15,4 @@
 ### Strict Fallback Policy
 When an unsupported country is requested, the system returns:  
 `"No configured data provider supports this country."` with job status `FAILED`. Under no circumstances are fake records generated or another country silently substituted.
+

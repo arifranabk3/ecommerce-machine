@@ -57,3 +57,4 @@ The Campaigns page features a dedicated **"Country Recipient Builder"** tab alon
 | **Tenant Isolation** | Scoped via `req.tenantId` on all database writes | PASSED |
 | **Formula Injection** | Cells prefixed with `'` if starting with `=`, `+`, `-`, `@` | PASSED |
 | **Unsupported Countries** | Returns 400 error `No configured data provider supports this country` | PASSED |
+

@@ -19,3 +19,4 @@
 5. Uses the exact same provider registry and deduplication service.
 6. Recipients are attached to the saved list.
 7. Under the "Campaigns" tab, creating a campaign requires selecting an approved sender identity, physical CAN-SPAM address, and explicit authorization before any emails can be sent. Zero auto-dispatch on collection.
+

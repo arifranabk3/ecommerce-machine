@@ -39,3 +39,4 @@ All build commands and TypeScript typechecking run cleanly with zero warnings or
 - **Multi-Tenant Scoping:** All operations (`CollectionJobModel`, `LeadModel`, `LeadListModel`) enforce mandatory `tenantId`.
 - **Deduplication:** Unique compound index `{ tenantId: 1, normalizedEmail: 1 }` prevents any duplicate email ingestion.
 - **Stage Isolation:** Collection jobs strictly update database records without queueing email transmission jobs.
+

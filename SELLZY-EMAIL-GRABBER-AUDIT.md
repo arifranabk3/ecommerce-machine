@@ -103,3 +103,4 @@ If a user selects an unsupported country (e.g. `XX`), the engine must not fabric
 2. The 11-column canonical CSV export specification remains unchanged.
 3. Two-Stage Separation: Zero automatic emails on collection or CSV download.
 4. Tenant and store isolation enforced on every query and mutation.
+

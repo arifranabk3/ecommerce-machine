@@ -45,3 +45,4 @@ CollectionJobSchema.index({ tenantId: 1, createdAt: -1 });
 CollectionJobSchema.index({ tenantId: 1, status: 1 });
 
 export const CollectionJobModel = mongoose.model<ICollectionJobDocument>('CollectionJob', CollectionJobSchema);
+

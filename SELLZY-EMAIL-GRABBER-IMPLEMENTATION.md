@@ -58,3 +58,4 @@ Rather than maintaining separate collection pipelines, **Email Grabber** and **E
 - `tests/excel_email_matching.test.ts`: **11 passed, 11 total (100%)**
 - TypeScript typecheck (`apps/api` & `apps/web`): **0 errors**
 - Next.js Web Lint: **0 errors**
+
